@@ -63,7 +63,6 @@ jobs:
           mkdir -p www
           cp index.html www/
           if [ -f logo.png ]; then cp logo.png www/; fi
-          if [ -f patch_tv.py ]; then python3 patch_tv.py .; fi
 
       - name: Add Capacitor iOS
         run: npx cap add ios
@@ -74,7 +73,15 @@ jobs:
       - name: Build unsigned iOS app
         working-directory: ios/App
         run: |
-          xcodebuild             -workspace App.xcworkspace             -scheme App             -sdk iphoneos             -configuration Debug             -derivedDataPath build             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             build
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
 
       - name: Package iOS app
         run: |
