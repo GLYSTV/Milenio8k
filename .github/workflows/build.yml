@@ -75,5 +75,5 @@ jobs:
         with:
           name: GLYSTV-iOS-unsigned
           path: ios/App/GLYSTV-iOS-unsigned.zip
-          if-no-files-found: error2
+          if-no-files-found: error
           
