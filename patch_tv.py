@@ -13,6 +13,12 @@ feats = ('    <uses-feature android:name="android.software.leanback" android:req
 if "android.software.leanback" not in s:
     s = re.sub(r'(<manifest[^>]*>\s*\n)', lambda m: m.group(1) + feats, s, count=1)
 
+# 1.1) nombre visible en el launcher
+if 'android:label=' not in s:
+    s = re.sub(r'<application', '<application\n        android:label="GLYSTVULTRA"', s, count=1)
+else:
+    s = re.sub(r'android:label="[^"]*"', 'android:label="GLYSTVULTRA"', s, count=1)
+
 # 2) banner en <application>
 if "android:banner" not in s:
     s = re.sub(r'<application', '<application\n        android:banner="@drawable/banner"', s, count=1)

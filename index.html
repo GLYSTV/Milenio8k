@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport"
-content="width=device-width, initial-scale=1, viewport-fit=cover"><title>GLYSTV</title><meta
+content="width=device-width, initial-scale=1, viewport-fit=cover"><title>GLYSTVULTRA</title><meta
 name="theme-color" content="#08090c"><meta name="mobile-web-app-capable"
 content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta
-name="apple-mobile-web-app-title" content="GLYSTV"><link rel="manifest"
+name="apple-mobile-web-app-title" content="GLYSTVULTRA"><link rel="manifest"
 href="manifest.json"><link rel="apple-touch-icon" href="icons/icon-192.png"><link
 rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet"
 href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap
@@ -539,14 +539,67 @@ body.pv-lock{overflow:hidden}
 .bar #q.expanded{width:min(220px,40vw)}
 .search-header-container:empty{display:none}
 </style>
-</head><body><div id="intro" aria-label="Introducción GLYSTV"><div class="intro-glow"></div><div
-class="intro-mark" aria-label="GLYSTV"><span>GLYS</span><b>TV</b></div><div
+
+<style id="glys-ultra-tv">
+:root{
+ --ultra-bg:#050914;--ultra-panel:#0b1424;--ultra-panel2:#101f34;
+ --ultra-line:#254365;--ultra-blue:#168bff;--ultra-cyan:#5bc7ff;
+ --ultra-text:#f4f8ff;--ultra-muted:#9db1c8;
+}
+html,body{background:var(--ultra-bg)!important;color:var(--ultra-text)!important}
+body{overscroll-behavior:none}
+button,.btn,.ghost,.tile,.hc,.pc,.ch,.cc,[role="button"],a,
+input,select,textarea{ -webkit-tap-highlight-color:transparent }
+button,.btn,.ghost,.tile,.hc,.pc,.ch,.cc,[role="button"]{
+ transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+:focus{outline:none}
+button:focus-visible,.btn:focus-visible,.ghost:focus-visible,
+.tile:focus-visible,.hc:focus-visible,.pc:focus-visible,.ch:focus-visible,
+.cc:focus-visible,[role="button"]:focus-visible,a:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+ outline:3px solid #8bd5ff!important;outline-offset:4px!important;
+ box-shadow:0 0 0 7px rgba(22,139,255,.26),0 0 28px rgba(22,139,255,.22)!important;
+ position:relative;z-index:20;
+}
+.tile:focus-visible,.hc:focus-visible,.pc:focus-visible,.ch:focus-visible,.cc:focus-visible{
+ background:linear-gradient(145deg,#12345a,#0b1b30)!important;
+ border-color:#56baff!important;transform:scale(1.035);
+}
+button:focus-visible,.ghost:focus-visible,.btn:focus-visible{
+ background:linear-gradient(110deg,#075bb0,#168bff)!important;color:#fff!important;
+}
+.tile:hover,.hc:hover,.pc:hover,.ch:hover,.cc:hover{transform:none}
+#intro{background:radial-gradient(ellipse at 50% 38%,#0b3765 0%,#071426 38%,#02050b 78%)!important}
+#intro .intro-mark b{color:#32aaff!important}
+#intro .intro-line{background:#183b5e!important}
+#intro .intro-line:after{background:linear-gradient(90deg,transparent,#168bff,#bceaff,transparent)!important}
+#intro .intro-loader i{background:linear-gradient(90deg,#086bd0,#53c4ff,#fff)!important}
+#login,#home,#lv{background-color:var(--ultra-bg)!important}
+#login .box,.box,.v4-panel,.v8-panel{background:linear-gradient(155deg,#102038,#091321)!important;border:1px solid #25496d!important}
+#login button,#login #go{background:linear-gradient(110deg,#075bb0,#168bff)!important}
+#tabs button.on,.cc.on,.v8-choice.selected{background:linear-gradient(110deg,#075bb0,#168bff)!important;border-color:#67c7ff!important}
+.tile,.hc,.pc,.ch,.cc{border-color:#284764!important}
+.tile .ic,.modern-icon{background:linear-gradient(145deg,#102b49,#081525)!important;border-color:#2a6598!important}
+#list .pc:focus,#list .ch:focus,#list #more:focus{outline:3px solid #8bd5ff!important;box-shadow:0 0 0 6px #168bff44!important}
+#q,#srv,#usr,#pwd,input,select,textarea{accent-color:#168bff}
+@media(min-width:700px) and (orientation:landscape){
+ main{padding:28px 4vw!important}
+ .tiles{gap:20px!important}
+ .tile{min-height:150px!important}
+ #list.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+
+</head><body><div id="intro" aria-label="Introducción GLYSTVULTRA"><div class="intro-glow"></div><div
+class="intro-mark" aria-label="GLYSTVULTRA"><span>GLYS</span><b>TVULTRA</b></div><div
 class="intro-line"></div><div class="intro-tag">TU ENTRETENIMIENTO · EN UN SOLO
 LUGAR</div><div class="intro-loader"><i></i></div><div class="intro-sub">Preparando tu experiencia</div></div><section id="login"><div class="logo"><img src="logo.png" alt=""
 onerror="this.remove();document.getElementById('lt').classList.remove('hide')"><div id="lt"
 class="hide"><div class="t">GLYS</div><div class="s">TV</div></div></div><div
 class="lrow"><div class="box"><h2>Bienvenido a <span
-class="brand4k">GLYSTV</span></h2><input id="srv" type="url" placeholder="URL del servidor (https://...)" autocapitalize="off"><input id="usr" type="text" placeholder="Usuario"
+class="brand4k">GLYSTVULTRA</span></h2><input id="srv" type="url" placeholder="URL del servidor (https://...)" autocapitalize="off"><input id="usr" type="text" placeholder="Usuario"
 autocomplete="username" autocapitalize="off"><input id="pwd" type="password"
 placeholder="Contraseña" autocomplete="current-password"><label class="rem"><input
 id="rem" type="checkbox" checked> Recordarme en este dispositivo</label><button
@@ -554,7 +607,7 @@ id="go">INICIAR SESIÓN</button><div id="err"></div></div><div id="qrbox"
 class="hide"><canvas id="qrc"></canvas><p id="qrtxt">Escanea el código QR con tu
 teléfono</p><small id="qrurl"></small></div></div><button class="lnk" id="m3u">Cargar lista
 M3U manualmente</button><button class="lnk hide" id="acctLoginBtn"><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></i> Mis listas guardadas</button><button class="lnk hide" id="acctCancel">← Volver sin cambiar de cuenta</button></section><main id="app" class="hide"><section id="home"><div class="hd"><img src="logo.png" alt=""
-onerror="this.remove()"><b>Milenio<span class="brand4k">4K</span><small
+onerror="this.remove()"><b>GLYSTVULTRA<small
 id="hmode"></small></b><span class="sp"></span><span id="hclock"></span><button
 class="ghost" id="out">Salir</button></div><div class="v4-homebar">
 <button class="ghost" id="profileBtn"><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></i> Perfil</button>
@@ -609,7 +662,7 @@ id="m3ubox"><textarea id="txt" placeholder="Pega aquí tu lista M3U (#EXTM3U ...
 class="btn">Subir archivo<input id="file" type="file" accept=".m3u,.m3u8,.txt" hidden></label></div></div></div></div></section><div id="picker" class="hide"><div class="ph"><b id="ptitle">Carpetas</b><div style="display:flex;gap:8px"><button class="ghost" id="refreshCats" title="Actualizar">↻ Actualizar</button><button class="ghost" id="pclose">✕ Cerrar</button></div></div><input id="cq" type="search" placeholder="Buscar carpeta…"><div id="cats"></div></div>
 <div id="v4Settings" class="v4-modal hide" aria-modal="true">
   <div class="v4-panel">
-    <h3><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></i> Configuración GLYSTV</h3>
+    <h3><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></i> Configuración GLYSTVULTRA</h3>
     <div class="v4-option"><div><b>Reproducción automática</b><small>Inicia automáticamente el contenido seleccionado.</small></div><input id="autoPlayOpt" type="checkbox" checked></div>
     <div class="v4-option"><div><b>Continuar viendo</b><small>Guardar el punto donde quedó cada película o episodio.</small></div><input id="resumeOpt" type="checkbox" checked></div>
     <div class="v4-option"><div><b>Modo infantil</b><small>Filtra categorías que no parezcan infantiles.</small></div><input id="kidsOpt" type="checkbox"></div>
@@ -2235,7 +2288,7 @@ syncOverlayFav();
     return o};
   /* Bienvenida corta con logo */
   var im=document.querySelector('#intro .intro-mark');
-  if(im){var lg=new Image();lg.className='intro-logo';lg.alt='GLYSTV';lg.onload=function(){im.innerHTML='';im.appendChild(lg)};lg.src='logo.png'}
+  if(im){var lg=new Image();lg.className='intro-logo';lg.alt='GLYSTVULTRA';lg.onload=function(){im.innerHTML='';im.appendChild(lg)};lg.src='logo.png'}
   setTimeout(function(){var i=$('intro');if(i)i.click()},900);
   /* Póster de relleno si la imagen falla */
   document.addEventListener('error',function(e){var t=e.target;if(t&&t.tagName==='IMG'&&t.closest){var p=t.closest('.im');if(p)p.classList.add('nopic')}},true);
@@ -2350,4 +2403,64 @@ syncOverlayFav();
   document.addEventListener('focusout',function(e){var t=e.target;if(t&&t.matches&&t.matches(SEL))t.readOnly=false},true);
 })();
 </script>
+
+<script id="glys-ultra-remote">
+(function(){
+ 'use strict';
+ var SELECT='button:not([disabled]),[role="button"],.tile,.hc,.pc,.ch,.cc,a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+ function isVisible(el){
+   if(!el||!el.getBoundingClientRect)return false;
+   var r=el.getBoundingClientRect(),s=getComputedStyle(el);
+   return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&!el.closest('.hide');
+ }
+ function candidates(){
+   return Array.prototype.slice.call(document.querySelectorAll(SELECT)).filter(isVisible);
+ }
+ function focusFirst(){
+   var all=candidates();
+   if(!all.length)return;
+   var preferred=document.querySelector('#app:not(.hide) .tile, #login:not(.hide) input, #login:not(.hide) button');
+   (preferred&&isVisible(preferred)?preferred:all[0]).focus();
+ }
+ document.addEventListener('focusin',function(e){
+   var el=e.target;
+   if(!el||!el.matches||!el.matches(SELECT))return;
+   // Focus only highlights a control. It never invokes its click/action handler.
+   try{el.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})}catch(_){}
+ },true);
+ document.addEventListener('keydown',function(e){
+   var k=e.key,code=e.keyCode,target=e.target;
+   var isBack=k==='Escape'||k==='Backspace'||code===4||code=== goBackCode();
+   if(isBack){
+     var modal=document.querySelector('.v4-modal:not(.hide),.v8-modal:not(.hide),#playerChoice:not(.hide),#playerOptions:not(.hide)');
+     if(modal){var close=modal.querySelector('[data-close],.v4-back,.v8-back,button');if(close){e.preventDefault();close.click();return}}
+   }
+   if(k==='Home'||code===172){e.preventDefault();focusFirst();return}
+   // Let Android WebView perform its native directional focus traversal.
+   // Enter/OK is the only keyboard action that activates the focused tile.
+   if((k==='Enter'||k==='NumpadEnter'||code===23||code===66)&&target){
+     if(target.matches&&target.matches('.tile,.hc,.pc,.ch,.cc,[role="button"]')){
+       e.preventDefault();target.click();
+     }
+   }
+ },true);
+ function goBackCode(){return 10009}
+ document.addEventListener('DOMContentLoaded',function(){
+   document.querySelectorAll('.tile,.hc,.pc,.ch,.cc').forEach(function(el){
+     if(!el.hasAttribute('tabindex'))el.tabIndex=0;
+     if(!el.hasAttribute('role'))el.setAttribute('role','button');
+   });
+   setTimeout(focusFirst,350);
+ });
+ // Keep newly rendered cards reachable by D-pad without activating them.
+ var mo=new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){
+   if(n.nodeType!==1)return;
+   var arr=[];if(n.matches&&n.matches('.tile,.hc,.pc,.ch,.cc'))arr.push(n);
+   if(n.querySelectorAll)arr=arr.concat(Array.from(n.querySelectorAll('.tile,.hc,.pc,.ch,.cc')));
+   arr.forEach(function(el){if(!el.hasAttribute('tabindex'))el.tabIndex=0;if(!el.hasAttribute('role'))el.setAttribute('role','button')});
+ })})});
+ mo.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body></html>
