@@ -1,20 +1,27 @@
-# ULTRA4K — antes GLYSTVULTRA
+# ULTRA4K PREMIUM
 
-Colores de marca: verde biche #8CC63F · verde profundo #5E9E2A · blanco #FFFFFF · fondo #0A0C08
+Aplicación Android / Android TV / Google TV con interfaz premium en negro, verde biche y blanco.
 
-Archivos modificados:
-- index.html: marca ULTRA4K, tema verde biche + blanco, navegación D-pad/OK y foco visible.
-- capacitor.config.json: appName ULTRA4K (el appId com.glystv.app se conserva para poder actualizar la instalación existente).
-- patch_tv.py: etiqueta ULTRA4K y registro de launcher Android TV / Google TV con banner.
-- glystv-res.zip: iconos del launcher (mipmap) nuevos en verde biche.
-- icon.png (1024x1024), banner.png (320x180, Android TV), banner-hd.png (1280x720).
-- .github/workflows/build.yml y package.json: nombres ULTRA4K.
+## Archivos principales
+- `index.html`: renovación visual integral premium; mantiene la lógica, navegación, listas, favoritos, historial, perfiles, ajustes y controles existentes.
+- `capacitor.config.json`: nombre ULTRA4K y `appId` original `com.glystv.app` conservado para permitir actualizar la instalación existente.
+- `build-glystv-v3.sh`: genera el proyecto Android y conserva los motores de reproducción integrados.
+- `patch_tv.py`: registra la etiqueta y el launcher de Android TV / Google TV.
+- `glystv-res.zip`, `icon.png`, `banner.png`, `banner-hd.png`: recursos gráficos de la aplicación y launcher.
+- `.github/workflows/build.yml`: compilación automática de APK mediante GitHub Actions.
 
-Compilar: sube todo al repositorio manteniendo las rutas y ejecuta el workflow "Build ULTRA4K Android".
+## Funciones conservadas según el código del proyecto
+- Inicio de sesión por servidor y carga manual de listas M3U.
+- TV en vivo, películas, series, categorías y búsqueda.
+- Favoritos, historial, continuar viendo y perfiles.
+- Configuración, modo infantil y bloqueo de contenido mediante PIN.
+- Control remoto con foco visible para navegación Android TV / Google TV.
+- Reproductor ExoPlayer (Media3 + FFmpeg) y VLC (libVLC), con selección automática o manual del motor.
+- Opciones de audio, subtítulos, relación de aspecto, velocidad, saltos y reanudación disponibles según el reproductor.
 
-## Reproductores (v3.1)
-- VLC (libVLC 3.6.0, org.videolan.android:libvlc-all): pantalla propia VlcPlayerActivity con audio/subtítulos/aspecto/velocidad, saltos de 10 s, reanudar y cola de episodios. Solo arm64-v8a y armeabi-v7a.
-- ExoPlayer (Media3 1.4.1 + decodificador FFmpeg): reproductor original.
-- Configuración > Motor de reproducción: Automático (ExoPlayer y, si falla, VLC) · VLC · ExoPlayer.
-- La vista previa embebida de TV en vivo sigue usando ExoPlayer; la pantalla completa usa el motor elegido.
-- Control remoto en VLC: OK pausa/menú, ←/→ saltar, ↑/↓ menú, CH+/CH- siguiente/anterior.
+## Compilar
+1. Sube los archivos del proyecto conservando sus rutas al repositorio GitHub.
+2. Ejecuta el workflow `Build ULTRA4K Android` desde Actions o realiza un push a `main`.
+3. Descarga el APK generado en la publicación `apk-<número de ejecución>`.
+
+Nota: esta entrega actualiza el diseño visual y documentación; no reemplaza servicios del proveedor, credenciales, URLs ni contenido de las listas. La compilación final debe ejecutarse en GitHub Actions para verificar el entorno Android completo.
