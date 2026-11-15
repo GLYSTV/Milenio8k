@@ -703,6 +703,29 @@ html:has(body.pv-lock){background:#000!important}
 #pv .pv-sec,#pv .pv-btns,#pv #pvNext{display:none!important}
 #pv.pv-full .pv-sec{display:none!important}
 </style>
+<style id="glys-more-folders">
+@media (orientation:landscape) and (min-width:700px){
+  /* Sin barra superior (Inicio / TV en vivo), sin título ni buscador de carpetas: más espacio */
+  #lv.panes .bar{display:none!important}
+  #lv.panes #picker .ph,#lv.panes #picker #cq{display:none!important}
+  #lv.panes{height:calc(100vh - 8px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;height:calc(100dvh - 8px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important}
+  main:has(#lv.panes:not(.hide)){padding-top:4px!important;padding-bottom:4px!important}
+  /* Carpetas más compactas: caben más */
+  #lv.panes #picker #cats{gap:4px!important}
+  #lv.panes #picker #cats .cc{min-height:36px!important;padding:6px 10px!important;font-size:13px!important;border-radius:10px!important;box-shadow:none!important}
+  #lv.panes #picker #cats .cc em{font-size:11px!important}
+  #lv.panes .search-header-container{display:flex!important;margin:0 0 6px}
+}
+</style>
+<style id="glys-remote-clean">
+/* Uso con control remoto: sin botones de pantalla en horizontal. Buscar = botón amarillo, favorito = rojo, Atrás = volver, OK = abrir */
+@media (orientation:landscape) and (min-width:700px){
+  #lv.panes #searchBtn,#lv.panes #refreshTop,#lv.panes #favCurrent{display:none!important}
+  #lv.panes .search-header-container{display:none!important}
+  #lv.panes .search-header-container:has(#q.expanded){display:flex!important}
+  #lv.panes #q.expanded{width:100%!important}
+}
+</style>
 </head><body><div id="intro" aria-label="Introducción ULTRA4K"><div class="intro-glow"></div><div
 class="intro-mark" aria-label="ULTRA4K"><span>ULTRA</span><b>4K</b></div><div
 class="intro-line"></div><div class="intro-tag">TU ENTRETENIMIENTO · EN UN SOLO
@@ -2590,12 +2613,60 @@ syncOverlayFav();
   window.loadTab=async function(t,f){
     var r=await prev(t,f);
     try{
-      if(t==='live'&&tab==='live'&&sess&&mq.matches&&catItems.length&&catIdx<0&&!$('lv').classList.contains('hasfolder')){
-        selectCat('');
+      if(sess&&mq.matches&&tab===t&&catItems.length&&catIdx<0&&!$('lv').classList.contains('hasfolder')){
+        if(t==='live')selectCat('');
+        else if(t==='vod'||t==='series')selectCat('all');
       }
     }catch(e){}
     return r;
   };
+})();
+</script>
+<script id="glys-move-search">
+/* En horizontal, buscador y actualizar pasan arriba de la lista de canales */
+(function(){
+  var mq=window.matchMedia('(orientation:landscape) and (min-width:700px)');
+  function place(){
+    var shc=document.querySelector('.search-header-container'),bar=document.querySelector('#lv .bar'),
+        sw=document.querySelector('.search-wrapper'),rt=$('refreshTop'),tabs=$('tabs');
+    if(!shc||!bar||!sw||!rt)return;
+    if(mq.matches){shc.style.display='flex';shc.appendChild(sw);shc.appendChild(rt);sw.style.marginLeft='0';rt.style.minHeight='34px';rt.style.padding='4px 10px'}
+    else{bar.insertBefore(sw,tabs);bar.insertBefore(rt,tabs);shc.style.display='none';sw.style.marginLeft='';rt.style.minHeight='';rt.style.padding=''}
+  }
+  if(mq.addEventListener)mq.addEventListener('change',place);
+  place();
+})();
+</script>
+<script id="glys-remote-keys">
+/* Control remoto sin botones de colores: ☰ Menú = buscar · ★ Estrella = favorito (canal resaltado o en reproducción) */
+(function(){
+  function toast(t){var x=$('v4Toast');if(!x)return;x.textContent=t;x.classList.remove('hide');clearTimeout(toast.t);toast.t=setTimeout(function(){x.classList.add('hide')},2200)}
+  var SEARCH={82:1,84:1,165:1,'ContextMenu':1,'Menu':1,'Info':1,'Search':1};
+  var FAV={174:1,17:1,'Bookmark':1,'*':1,'Star':1,'Favorite':1,'F1':1};
+  var KNOWN={37:1,38:1,39:1,40:1,13:1,23:1,66:1,4:1,8:1,27:1,16:1,17:1,18:1,9:1,24:1,25:1,164:1,
+    'ArrowUp':1,'ArrowDown':1,'ArrowLeft':1,'ArrowRight':1,'Enter':1,'Escape':1,'Backspace':1,'GoBack':1,'Tab':1,'Shift':1,'Control':1,'Alt':1,'AudioVolumeUp':1,'AudioVolumeDown':1,'AudioVolumeMute':1,
+    'MediaPlayPause':1,'MediaPlay':1,'MediaPause':1,'MediaTrackNext':1,'MediaTrackPrevious':1,'MediaFastForward':1,'MediaRewind':1,'ChannelUp':1,'ChannelDown':1};
+  function target(){
+    var a=document.activeElement,el=a&&a.closest?a.closest('#list [data-i]'):null;
+    if(el&&chans[+el.dataset.i]&&!chans[+el.dataset.i].series)return chans[+el.dataset.i];
+    return cur>=0?chans[cur]:null;
+  }
+  document.addEventListener('keydown',function(e){
+    var tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;
+    if($('app').classList.contains('hide'))return;
+    var k=e.key,c=e.keyCode;
+    if(SEARCH[k]||SEARCH[c]){
+      if(!$('lv').classList.contains('hide')){e.preventDefault();$('searchBtn').click()}
+      return;
+    }
+    if(FAV[k]||FAV[c]){
+      var ch=target();
+      if(ch){e.preventDefault();toggleFav(ch);toast(isFav(ch)?'★ Añadido a favoritos':'Quitado de favoritos')}
+      return;
+    }
+    /* Ayuda temporal: muestra el código de teclas desconocidas para poder asignarlas */
+    if(!KNOWN[k]&&!KNOWN[c])toast('Tecla: '+k+' (código '+c+')');
+  },false);
 })();
 </script>
 </body></html>
