@@ -151,7 +151,10 @@ public class NativePlayerPlugin extends Plugin {
   public void play(PluginCall call) {
     String url = call.getString("url");
     if (url == null) { call.reject("Falta la url"); return; }
-    Intent i = new Intent(getContext(), PlayerActivity.class);
+    String engine = call.getString("engine", "auto");
+    Intent i = new Intent(getContext(),
+        "vlc".equals(engine) ? VlcPlayerActivity.class : PlayerActivity.class);
+    i.putExtra("engine", engine);
     i.putExtra("url", url);
     i.putExtra("title", call.getString("title", ""));
     i.putExtra("urls", call.getString("urls", ""));
@@ -390,14 +393,14 @@ public class NativePlayerPlugin extends Plugin {
     android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
     g.setCornerRadius(26);
     if (focus) {
-      g.setColor(Color.rgb(22, 135, 255));
+      g.setColor(Color.rgb(140, 198, 63));
       g.setStroke(4, Color.WHITE);
     } else if (hl) {
-      g.setColor(Color.rgb(10, 79, 152));
-      g.setStroke(2, Color.rgb(86, 184, 255));
+      g.setColor(Color.rgb(62, 104, 28));
+      g.setStroke(2, Color.rgb(168, 216, 78));
     } else {
-      g.setColor(Color.argb(215, 14, 22, 34));
-      g.setStroke(2, Color.argb(130, 86, 130, 180));
+      g.setColor(Color.argb(215, 12, 20, 10));
+      g.setStroke(2, Color.argb(130, 94, 158, 42));
     }
     return g;
   }
@@ -590,6 +593,388 @@ public class NativePlayerPlugin extends Plugin {
 }
 JAVA
 
+cat > $PKG/VlcPlayerActivity.java <<'JAVA'
+package com.glystv.app;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.Locale;
+import org.videolan.libvlc.LibVLC;
+import org.videolan.libvlc.Media;
+import org.videolan.libvlc.MediaPlayer;
+import org.videolan.libvlc.util.VLCVideoLayout;
+
+/* Reproductor VLC (libVLC) de ULTRA4K: todos los códecs y protocolos de VLC */
+public class VlcPlayerActivity extends Activity {
+  private static final int BICHE = Color.rgb(140, 198, 63);
+  private static final String PREFS = "glystv_resume";
+
+  private LibVLC libVLC;
+  private MediaPlayer mp;
+  private VLCVideoLayout vlcLayout;
+  private TextView status, ttl, tTime, bNext;
+  private SeekBar seek;
+  private LinearLayout bar;
+  private final Handler h = new Handler(Looper.getMainLooper());
+  private String url = "";
+  private String[] qUrls = new String[0];
+  private String[] qTitles = new String[0];
+  private int qIdx = 0;
+  private int skipMs = 10000;
+  private boolean barOn = false, retried = false, resumed = false, userSeek = false;
+  private long length = 0;
+  private int aspect = 0, rateIdx = 1;
+
+  private static final MediaPlayer.ScaleType[] SC = {
+    MediaPlayer.ScaleType.SURFACE_BEST_FIT, MediaPlayer.ScaleType.SURFACE_FIT_SCREEN,
+    MediaPlayer.ScaleType.SURFACE_FILL, MediaPlayer.ScaleType.SURFACE_16_9,
+    MediaPlayer.ScaleType.SURFACE_4_3 };
+  private static final String[] SCN = { "Ajustar", "Llenar pantalla", "Estirar", "16:9", "4:3" };
+  private static final float[] RATES = { 0.75f, 1f, 1.25f, 1.5f, 2f };
+
+  private final Runnable hideBar = () -> showBar(false);
+  private final Runnable tick = new Runnable() {
+    @Override public void run() {
+      updateProgress();
+      h.postDelayed(this, 1000);
+    }
+  };
+
+  @Override
+  protected void onCreate(Bundle b) {
+    super.onCreate(b);
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    getWindow().getDecorView().setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+
+    url = getIntent().getStringExtra("url");
+    if (url == null) { finish(); return; }
+    String u = getIntent().getStringExtra("urls");
+    String t = getIntent().getStringExtra("titles");
+    if (u != null && !u.isEmpty()) {
+      qUrls = u.split("\n");
+      qTitles = t == null ? new String[0] : t.split("\n");
+      qIdx = getIntent().getIntExtra("idx", 0);
+    }
+    skipMs = getSharedPreferences("glystv_prefs", MODE_PRIVATE).getInt("skip", 10000);
+
+    FrameLayout root = new FrameLayout(this);
+    root.setBackgroundColor(Color.BLACK);
+    vlcLayout = new VLCVideoLayout(this);
+    root.addView(vlcLayout, new FrameLayout.LayoutParams(-1, -1));
+
+    ttl = new TextView(this);
+    ttl.setTextColor(Color.WHITE);
+    ttl.setTextSize(20);
+    ttl.setSingleLine(true);
+    ttl.setEllipsize(android.text.TextUtils.TruncateAt.END);
+    ttl.setShadowLayer(6, 2, 2, Color.BLACK);
+    ttl.setPadding(32, 24, 32, 12);
+    ttl.setText(getIntent().getStringExtra("title") == null ? "" : getIntent().getStringExtra("title"));
+    ttl.setVisibility(View.GONE);
+    root.addView(ttl, new FrameLayout.LayoutParams(-1, -2, Gravity.TOP | Gravity.START));
+
+    status = new TextView(this);
+    status.setTextColor(Color.WHITE);
+    status.setTextSize(14);
+    status.setShadowLayer(5, 2, 2, Color.BLACK);
+    status.setPadding(32, 24, 32, 24);
+    FrameLayout.LayoutParams stLp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.START);
+    stLp.topMargin = 90;
+    root.addView(status, stLp);
+
+    /* Barra inferior: progreso + botones */
+    bar = new LinearLayout(this);
+    bar.setOrientation(LinearLayout.VERTICAL);
+    bar.setBackgroundColor(Color.argb(200, 8, 12, 6));
+    bar.setPadding(32, 16, 32, 20);
+    LinearLayout line = new LinearLayout(this);
+    line.setOrientation(LinearLayout.HORIZONTAL);
+    line.setGravity(Gravity.CENTER_VERTICAL);
+    seek = new SeekBar(this);
+    seek.setKeyProgressIncrement(skipMs);
+    seek.getProgressDrawable().setColorFilter(BICHE, android.graphics.PorterDuff.Mode.SRC_IN);
+    seek.getThumb().setColorFilter(BICHE, android.graphics.PorterDuff.Mode.SRC_IN);
+    seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+      @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
+        if (fromUser && mp != null) { mp.setTime(p); armHide(); }
+      }
+      @Override public void onStartTrackingTouch(SeekBar s) { userSeek = true; }
+      @Override public void onStopTrackingTouch(SeekBar s) { userSeek = false; }
+    });
+    line.addView(seek, new LinearLayout.LayoutParams(0, -2, 1f));
+    tTime = new TextView(this);
+    tTime.setTextColor(Color.WHITE);
+    tTime.setTextSize(14);
+    tTime.setPadding(24, 0, 0, 0);
+    line.addView(tTime, new LinearLayout.LayoutParams(-2, -2));
+    bar.addView(line, new LinearLayout.LayoutParams(-1, -2));
+
+    LinearLayout btns = new LinearLayout(this);
+    btns.setOrientation(LinearLayout.HORIZONTAL);
+    btns.setGravity(Gravity.CENTER);
+    btns.addView(btn("⏪ 10s", x -> seekBy(-skipMs)));
+    btns.addView(btn("⏯ Pausa", x -> togglePause()));
+    btns.addView(btn("10s ⏩", x -> seekBy(skipMs)));
+    btns.addView(btn("Audio", x -> pickAudio()));
+    btns.addView(btn("Subtítulos", x -> pickSubs()));
+    btns.addView(btn("Aspecto", x -> pickAspect()));
+    btns.addView(btn("Velocidad", x -> pickRate()));
+    bNext = btn("Siguiente ›", x -> playNext());
+    bNext.setVisibility(qIdx + 1 < qUrls.length ? View.VISIBLE : View.GONE);
+    btns.addView(bNext);
+    bar.addView(btns, new LinearLayout.LayoutParams(-1, -2));
+    bar.setVisibility(View.GONE);
+    root.addView(bar, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+
+    root.setOnClickListener(x -> showBar(!barOn));
+    setContentView(root);
+
+    ArrayList<String> o = new ArrayList<>();
+    o.add("--network-caching=1500");
+    o.add("--live-caching=1500");
+    o.add("--http-reconnect");
+    o.add("--avcodec-hw=any");
+    o.add("--audio-time-stretch");
+    libVLC = new LibVLC(this, o);
+    mp = new MediaPlayer(libVLC);
+    mp.attachViews(vlcLayout, null, true, false);
+    mp.setEventListener(this::onVlcEvent);
+    start();
+    h.postDelayed(tick, 1000);
+  }
+
+  private TextView btn(String txt, View.OnClickListener l) {
+    final TextView b = new TextView(this);
+    b.setText(txt);
+    b.setTextColor(Color.WHITE);
+    b.setTextSize(14);
+    b.setGravity(Gravity.CENTER);
+    b.setPadding(22, 12, 22, 12);
+    b.setFocusable(true);
+    b.setClickable(true);
+    b.setOnFocusChangeListener((v, f) -> b.setBackgroundColor(f ? Color.argb(190, 94, 158, 42) : Color.TRANSPARENT));
+    b.setOnClickListener(x -> { armHide(); l.onClick(x); });
+    return b;
+  }
+
+  private void start() {
+    status.setText("Cargando con VLC…");
+    Media m = new Media(libVLC, Uri.parse(url));
+    m.setHWDecoderEnabled(true, false);
+    m.addOption(":http-user-agent=VLC/3.0.18 LibVLC/3.0.18");
+    m.addOption(":network-caching=1500");
+    mp.setMedia(m);
+    m.release();
+    mp.play();
+  }
+
+  private void onVlcEvent(MediaPlayer.Event e) {
+    switch (e.type) {
+      case MediaPlayer.Event.Playing:
+        status.setText("");
+        if (!resumed) {
+          resumed = true;
+          long saved = getSharedPreferences(PREFS, MODE_PRIVATE).getLong(key(), 0);
+          if (saved > 5000) mp.setTime(saved);
+        }
+        break;
+      case MediaPlayer.Event.Buffering:
+        if (e.getBuffering() < 100f) status.setText("Cargando " + (int) e.getBuffering() + "%");
+        else status.setText("");
+        break;
+      case MediaPlayer.Event.LengthChanged:
+        length = e.getLengthChanged();
+        break;
+      case MediaPlayer.Event.EncounteredError:
+        if (!retried && url.contains(".m3u8")) {
+          retried = true;
+          url = url.replace(".m3u8", ".ts");
+          status.setText("Probando formato .ts…");
+          start();
+        } else {
+          status.setText("VLC no pudo reproducir este contenido.");
+          showBar(true);
+        }
+        break;
+      case MediaPlayer.Event.EndReached:
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().remove(key()).apply();
+        if (qIdx + 1 < qUrls.length) playNext(); else finish();
+        break;
+      default: break;
+    }
+  }
+
+  private String key() { return "v" + url.hashCode(); }
+
+  private void saveResume() {
+    try {
+      if (mp == null || length <= 0) return;
+      long t = mp.getTime();
+      getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+          .putLong(key(), t > length - 15000 ? 0 : t).apply();
+    } catch (Exception ex) { /* ignorar */ }
+  }
+
+  private void playNext() {
+    if (qIdx + 1 >= qUrls.length) return;
+    saveResume();
+    qIdx++;
+    url = qUrls[qIdx];
+    retried = false; resumed = false; length = 0;
+    if (qIdx < qTitles.length) ttl.setText(qTitles[qIdx]);
+    bNext.setVisibility(qIdx + 1 < qUrls.length ? View.VISIBLE : View.GONE);
+    start();
+  }
+
+  private void playPrev() {
+    if (qIdx <= 0) return;
+    saveResume();
+    qIdx--;
+    url = qUrls[qIdx];
+    retried = false; resumed = false; length = 0;
+    if (qIdx < qTitles.length) ttl.setText(qTitles[qIdx]);
+    bNext.setVisibility(View.VISIBLE);
+    start();
+  }
+
+  private void seekBy(long d) {
+    if (mp == null || length <= 0) return;
+    long p = Math.max(0, Math.min(length, mp.getTime() + d));
+    mp.setTime(p);
+    updateProgress();
+  }
+
+  private void togglePause() {
+    if (mp == null) return;
+    if (mp.isPlaying()) mp.pause(); else mp.play();
+  }
+
+  private static String fmt(long ms) {
+    long s = Math.max(0, ms / 1000);
+    return s >= 3600 ? String.format(Locale.US, "%d:%02d:%02d", s / 3600, (s / 60) % 60, s % 60)
+                     : String.format(Locale.US, "%d:%02d", s / 60, s % 60);
+  }
+
+  private void updateProgress() {
+    if (mp == null || !barOn) return;
+    if (length > 0) {
+      seek.setVisibility(View.VISIBLE);
+      seek.setMax((int) Math.min(Integer.MAX_VALUE, length));
+      if (!userSeek) seek.setProgress((int) Math.min(Integer.MAX_VALUE, mp.getTime()));
+      tTime.setText(fmt(mp.getTime()) + " / " + fmt(length));
+    } else {
+      seek.setVisibility(View.INVISIBLE);
+      tTime.setText("EN VIVO");
+    }
+  }
+
+  private void showBar(boolean on) {
+    barOn = on;
+    bar.setVisibility(on ? View.VISIBLE : View.GONE);
+    ttl.setVisibility(on ? View.VISIBLE : View.GONE);
+    h.removeCallbacks(hideBar);
+    if (on) { updateProgress(); armHide(); }
+  }
+
+  private void armHide() {
+    h.removeCallbacks(hideBar);
+    h.postDelayed(hideBar, 5000);
+  }
+
+  private void menu(String title, String[] items, android.content.DialogInterface.OnClickListener l) {
+    h.removeCallbacks(hideBar);
+    new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        .setTitle(title).setItems(items, l).show();
+  }
+
+  private void pickAudio() {
+    final MediaPlayer.TrackDescription[] a = mp.getAudioTracks();
+    if (a == null || a.length == 0) { status.setText("Sin pistas de audio"); return; }
+    String[] n = new String[a.length];
+    for (int i = 0; i < a.length; i++) n[i] = a[i].name;
+    menu("Audio", n, (d, w) -> mp.setAudioTrack(a[w].id));
+  }
+
+  private void pickSubs() {
+    final MediaPlayer.TrackDescription[] s = mp.getSpuTracks();
+    if (s == null || s.length == 0) { status.setText("Sin subtítulos"); return; }
+    String[] n = new String[s.length];
+    for (int i = 0; i < s.length; i++) n[i] = s[i].name;
+    menu("Subtítulos", n, (d, w) -> mp.setSpuTrack(s[w].id));
+  }
+
+  private void pickAspect() {
+    menu("Aspecto", SCN, (d, w) -> { aspect = w; mp.setVideoScale(SC[w]); });
+  }
+
+  private void pickRate() {
+    String[] n = new String[RATES.length];
+    for (int i = 0; i < RATES.length; i++) n[i] = RATES[i] + "x";
+    menu("Velocidad", n, (d, w) -> { rateIdx = w; mp.setRate(RATES[w]); });
+  }
+
+  @Override
+  public boolean dispatchKeyEvent(KeyEvent e) {
+    if (e.getAction() == KeyEvent.ACTION_DOWN) {
+      int k = e.getKeyCode();
+      if (k == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || k == KeyEvent.KEYCODE_MEDIA_PLAY || k == KeyEvent.KEYCODE_MEDIA_PAUSE) { togglePause(); showBar(true); return true; }
+      if (k == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) { seekBy(skipMs * 3L); return true; }
+      if (k == KeyEvent.KEYCODE_MEDIA_REWIND) { seekBy(-skipMs * 3L); return true; }
+      if (k == KeyEvent.KEYCODE_MEDIA_NEXT || k == KeyEvent.KEYCODE_CHANNEL_UP) { playNext(); return true; }
+      if (k == KeyEvent.KEYCODE_MEDIA_PREVIOUS || k == KeyEvent.KEYCODE_CHANNEL_DOWN) { playPrev(); return true; }
+      if (!barOn) {
+        if (k == KeyEvent.KEYCODE_DPAD_LEFT) { seekBy(-skipMs); return true; }
+        if (k == KeyEvent.KEYCODE_DPAD_RIGHT) { seekBy(skipMs); return true; }
+        if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER) { togglePause(); showBar(true); return true; }
+        if (k == KeyEvent.KEYCODE_DPAD_UP || k == KeyEvent.KEYCODE_DPAD_DOWN) {
+          showBar(true);
+          if (bar.getChildCount() > 1) bar.getChildAt(1).requestFocus();
+          return true;
+        }
+      } else {
+        armHide();
+        if (k == KeyEvent.KEYCODE_BACK) { showBar(false); return true; }
+      }
+    }
+    return super.dispatchKeyEvent(e);
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
+    saveResume();
+    if (mp != null) mp.pause();
+  }
+
+  @Override
+  protected void onDestroy() {
+    h.removeCallbacksAndMessages(null);
+    saveResume();
+    try {
+      if (mp != null) { mp.setEventListener(null); mp.stop(); mp.detachViews(); mp.release(); }
+      if (libVLC != null) libVLC.release();
+    } catch (Exception ex) { /* ignorar */ }
+    super.onDestroy();
+  }
+}
+JAVA
+
 cat > $PKG/PlayerActivity.java <<'JAVA'
 package com.glystv.app;
 
@@ -622,7 +1007,7 @@ public class PlayerActivity extends Activity {
   private String firstInfo = "";
   private final Runnable clear = () -> status.setText("");
 
-  private static final int GOLD = Color.rgb(22, 135, 255);
+  private static final int GOLD = Color.rgb(140, 198, 63);
   private long t0 = 0;
   private String retryInfo = "";
   private int nRetries = 0;
@@ -753,6 +1138,8 @@ public class PlayerActivity extends Activity {
           url = url.replace(".m3u8", ".ts");
           status.setText("Probando formato .ts…");
           start();
+        } else if (!"exo".equals(getIntent().getStringExtra("engine"))) {
+          launchVlc();
         } else {
           status.setText(firstInfo.isEmpty()
               ? "Error: " + info
@@ -833,7 +1220,7 @@ public class PlayerActivity extends Activity {
     z.setFocusable(true);
     z.setClickable(true);
     z.setOnFocusChangeListener((view, f) ->
-        z.setBackgroundColor(f ? Color.argb(120, 22, 135, 255) : Color.TRANSPARENT));
+        z.setBackgroundColor(f ? Color.argb(120, 140, 198, 63) : Color.TRANSPARENT));
     z.setOnClickListener(view -> {
       aspectMode = (aspectMode + 1) % ASP.length;
       pv.setResizeMode(aspectMode == 1 ? AspectRatioFrameLayout.RESIZE_MODE_ZOOM
@@ -910,6 +1297,21 @@ public class PlayerActivity extends Activity {
     }
   }
 
+  /* Si ExoPlayer no puede, se abre el mismo contenido con VLC */
+  private void launchVlc() {
+    android.content.Intent i = new android.content.Intent(this, VlcPlayerActivity.class);
+    i.putExtras(getIntent());
+    i.putExtra("engine", "vlc");
+    if (qUrls.length > 0 && qIdx < qUrls.length) {
+      i.putExtra("url", qUrls[qIdx]);
+      i.putExtra("idx", qIdx);
+    } else {
+      i.putExtra("url", getIntent().getStringExtra("url"));
+    }
+    startActivity(i);
+    finish();
+  }
+
   private void parseQueue() {
     String u = getIntent().getStringExtra("urls");
     String t = getIntent().getStringExtra("titles");
@@ -931,7 +1333,7 @@ public class PlayerActivity extends Activity {
     b.setFocusable(true);
     b.setClickable(true);
     b.setOnFocusChangeListener((view, f) ->
-        b.setBackgroundColor(f ? Color.argb(120, 22, 135, 255) : Color.TRANSPARENT));
+        b.setBackgroundColor(f ? Color.argb(120, 140, 198, 63) : Color.TRANSPARENT));
     return b;
   }
 
@@ -995,7 +1397,7 @@ public class PlayerActivity extends Activity {
       float dn = getResources().getDisplayMetrics().density;
       android.widget.LinearLayout col = new android.widget.LinearLayout(c);
       col.setOrientation(android.widget.LinearLayout.VERTICAL);
-      col.setBackgroundColor(Color.rgb(8, 14, 24));
+      col.setBackgroundColor(Color.rgb(10, 18, 8));
       TextView h = new TextView(c);
       h.setText(title.toUpperCase());
       h.setTextColor(GOLD);
@@ -1003,7 +1405,7 @@ public class PlayerActivity extends Activity {
       h.setPadding((int) (20 * dn), (int) (18 * dn), (int) (20 * dn), (int) (12 * dn));
       col.addView(h);
       View line = new View(c);
-      line.setBackgroundColor(Color.rgb(22, 135, 255));
+      line.setBackgroundColor(Color.rgb(140, 198, 63));
       col.addView(line, new android.widget.LinearLayout.LayoutParams(-1, (int) (2 * dn)));
       android.widget.LinearLayout box = new android.widget.LinearLayout(c);
       box.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -1021,7 +1423,7 @@ public class PlayerActivity extends Activity {
         t.setFocusable(true);
         t.setClickable(true);
         t.setOnFocusChangeListener((view, f) ->
-            t.setBackgroundColor(f ? Color.rgb(22, 135, 255) : Color.TRANSPARENT));
+            t.setBackgroundColor(f ? Color.rgb(140, 198, 63) : Color.TRANSPARENT));
         t.setOnClickListener(view -> { dlg.dismiss(); if (l != null) l.onClick(dlg, w); });
         box.addView(t);
         if (first == null) first = t;
@@ -1490,7 +1892,9 @@ fi
 
 sed -i 's#<application#<application android:usesCleartextTraffic="true"#' $MAN
 sed -i 's#</application>#    <activity android:name=".PlayerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />\n    </application>#' $MAN
-sed -i '/^dependencies {/a\    implementation "androidx.media3:media3-exoplayer:1.4.1"\n    implementation "androidx.media3:media3-exoplayer-hls:1.4.1"\n    implementation "androidx.media3:media3-ui:1.4.1"\n    implementation "org.jellyfin.media3:media3-ffmpeg-decoder:1.4.1+1"' android/app/build.gradle
+sed -i 's#</application>#    <activity android:name=".VlcPlayerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />\n    </application>#' $MAN
+sed -i '/^dependencies {/a\    implementation "androidx.media3:media3-exoplayer:1.4.1"\n    implementation "androidx.media3:media3-exoplayer-hls:1.4.1"\n    implementation "androidx.media3:media3-ui:1.4.1"\n    implementation "org.jellyfin.media3:media3-ffmpeg-decoder:1.4.1+1"\n    implementation "org.videolan.android:libvlc-all:3.6.0"' android/app/build.gradle
+sed -i '/defaultConfig {/a\        ndk { abiFilters "armeabi-v7a", "arm64-v8a" }' android/app/build.gradle
 
 python3 patch_tv.py .
 

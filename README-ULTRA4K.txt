@@ -11,3 +11,10 @@ Archivos modificados:
 - .github/workflows/build.yml y package.json: nombres ULTRA4K.
 
 Compilar: sube todo al repositorio manteniendo las rutas y ejecuta el workflow "Build ULTRA4K Android".
+
+## Reproductores (v3.1)
+- VLC (libVLC 3.6.0, org.videolan.android:libvlc-all): pantalla propia VlcPlayerActivity con audio/subtítulos/aspecto/velocidad, saltos de 10 s, reanudar y cola de episodios. Solo arm64-v8a y armeabi-v7a.
+- ExoPlayer (Media3 1.4.1 + decodificador FFmpeg): reproductor original.
+- Configuración > Motor de reproducción: Automático (ExoPlayer y, si falla, VLC) · VLC · ExoPlayer.
+- La vista previa embebida de TV en vivo sigue usando ExoPlayer; la pantalla completa usa el motor elegido.
+- Control remoto en VLC: OK pausa/menú, ←/→ saltar, ↑/↓ menú, CH+/CH- siguiente/anterior.
