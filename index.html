@@ -497,7 +497,7 @@ body.pv-lock{overflow:hidden}
 #pv.pv-full .pv-mini{font-size:18px!important;padding:7px 14px!important}
 #pv.pv-full .pv-pill{font-size:14px;min-width:130px}
 #pv.pv-full .pv-pill-i{width:46px;font-size:20px}
-#pv.pv-live #pvSeek,#pv.pv-live #pvRew,#pv.pv-live #pvFwd{display:none}
+#pv.pv-live #pvSeek{display:none}
 @media (orientation:portrait) and (max-width:520px){#pv.pv-full .pv-btns .player-ctrl-btn{font-size:13px;padding:12px 4px}}
 </style>
 <style id="glys-v17-css">
@@ -687,7 +687,23 @@ button:focus-visible,.btn:focus-visible,.ghost:focus-visible,.tile:focus-visible
 @media(min-width:900px) and (orientation:landscape){main{padding:28px 4vw!important}.tiles{grid-template-columns:repeat(4,minmax(0,1fr))!important}.tile{min-height:166px!important}#list.grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))!important}}
 @media(max-width:650px){.v4-homebar{gap:7px!important}.v4-homebar .ghost{flex:1 1 calc(50% - 7px);padding:10px!important}.tiles{gap:11px!important}.tile{min-height:125px!important;padding:14px!important}.modern-icon,.tile .ic{width:46px!important;height:46px!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
-</style></head><body><div id="intro" aria-label="Introducción ULTRA4K"><div class="intro-glow"></div><div
+</style><style id="glys-fullscreen-fix">
+/* Pantalla completa real: sin marco gris, sin bordes, sin padding, video llenando todo */
+html:fullscreen,html:-webkit-full-screen,body.pv-lock{background:#000!important}
+body.pv-lock{padding:0!important;margin:0!important;overflow:hidden!important}
+html:has(body.pv-lock){background:#000!important}
+#pv.pv-full{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-width:100vw!important;min-height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;background:#000!important;z-index:2147483000!important}
+#pv.pv-full video{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;background:#000!important;object-fit:cover!important}
+#pv.pv-full.player-aspect-contain video{object-fit:contain!important}
+#pv.pv-full.player-aspect-fill video{object-fit:fill!important}
+#pv.pv-full:focus,#pv.pv-full:focus-visible{outline:0!important;box-shadow:none!important}
+</style>
+<style id="glys-hide-player-buttons">
+/* Sin botones sobre el reproductor: Normal, Audio, Volver, Opciones, Pantalla, Favorito (se sale con Atrás) */
+#pv .pv-sec,#pv .pv-btns,#pv #pvNext{display:none!important}
+#pv.pv-full .pv-sec{display:none!important}
+</style>
+</head><body><div id="intro" aria-label="Introducción ULTRA4K"><div class="intro-glow"></div><div
 class="intro-mark" aria-label="ULTRA4K"><span>ULTRA</span><b>4K</b></div><div
 class="intro-line"></div><div class="intro-tag">TU ENTRETENIMIENTO · EN UN SOLO
 LUGAR</div><div class="intro-loader"><i></i></div><div class="intro-sub">Preparando tu experiencia</div></div><section id="login"><div class="logo"><img src="logo.png" alt=""
@@ -734,10 +750,8 @@ lista</button><div id="msg"></div><div id="list"></div></div><div id="right"><di
     <button class="player-ctrl-btn pv-pill" id="pvAspectBtn" title="Relación de aspecto"><span id="pvAspTxt">Normal</span><span class="pv-pill-i">▣</span></button>
     <button class="player-ctrl-btn pv-pill" id="pvAudioBtn" title="Audio"><span id="pvAudTxt">Audio<br>Automática</span><span class="pv-pill-i" id="pvAudIco">🔊</span></button>
   </div>
-  <div class="pv-timerow">
-    <button class="player-ctrl-btn pv-mini" id="pvRew" title="Retroceder">⏪</button>
-    <button class="player-ctrl-btn pv-mini" id="pvPlay" title="Pausa / Reproducir">⏸</button>
-    <button class="player-ctrl-btn pv-mini" id="pvFwd" title="Adelantar">⏩</button>
+  <div class="pv-timerow pv-timerow-simple">
+    <button class="player-ctrl-btn pv-mini" id="pvPlay" title="Pausa / Reproducir" aria-label="Pausa o reproducir">⏸</button>
     <span class="pv-time"><span id="pvCur">00:00</span> • <span id="pvDur">--:--</span></span>
   </div>
   <input type="range" id="pvSeek" min="0" max="100" step="any" value="0" aria-label="Posición">
@@ -1905,8 +1919,6 @@ syncOverlayFav();
   }
   function togglePlay(){if(vid.paused)vid.play().catch(function(){});else vid.pause()}
   $('pvPlay').onclick=function(){togglePlay();showCtl()};
-  $('pvRew').onclick=function(){skip(-1);showCtl()};
-  $('pvFwd').onclick=function(){skip(1);showCtl()};
 
   /* --- Tiempo y barra --- */
   var seek=$('pvSeek');
@@ -1932,10 +1944,10 @@ syncOverlayFav();
   });
 
   /* --- Relación de aspecto (Normal / Zoom / Estirar) --- */
-  var ASP=['auto','cover','fill'],ASPN={auto:'Normal',contain:'Normal',cover:'Zoom',fill:'Estirar'};
+  var ASP=['auto','contain','fill'],ASPN={auto:'Pantalla completa',contain:'Original',cover:'Pantalla completa',fill:'Estirar'};
   function refreshAspect(){var a=opts().aspect||'auto';$('pvAspTxt').textContent=ASPN[a]||'Normal'}
   $('pvAspectBtn').onclick=function(){
-    var o=opts(),a=o.aspect==='contain'?'auto':(o.aspect||'auto'),n=ASP[(ASP.indexOf(a)+1)%ASP.length];
+    var o=opts(),a=o.aspect==='cover'?'auto':(o.aspect||'auto'),n=ASP[(ASP.indexOf(a)+1)%ASP.length];
     o.aspect=n;
     try{var st=JSON.parse(localStorage.getItem('glys_player_options')||'{}');st.aspect=n;localStorage.setItem('glys_player_options',JSON.stringify(st))}catch(e){}
     pv.classList.remove('player-aspect-contain','player-aspect-cover','player-aspect-fill');
@@ -2570,4 +2582,20 @@ syncOverlayFav();
   if(b)b.addEventListener('click',function(){var o=['auto','vlc','exo'],n=o[(o.indexOf(get())+1)%3];try{localStorage.setItem('u4k_engine',n)}catch(e){}paint()});
   paint();
 })();
-</script></body></html>
+</script><script id="glys-autofolder">
+/* TV en vivo (horizontal): carpetas + lista de canales a la vez, sin tener que elegir carpeta primero */
+(function(){
+  var mq=window.matchMedia('(orientation:landscape) and (min-width:700px)');
+  var prev=window.loadTab;
+  window.loadTab=async function(t,f){
+    var r=await prev(t,f);
+    try{
+      if(t==='live'&&tab==='live'&&sess&&mq.matches&&catItems.length&&catIdx<0&&!$('lv').classList.contains('hasfolder')){
+        selectCat('');
+      }
+    }catch(e){}
+    return r;
+  };
+})();
+</script>
+</body></html>
