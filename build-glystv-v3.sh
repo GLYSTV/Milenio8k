@@ -708,8 +708,11 @@ public class VlcPlayerActivity extends Activity {
     line.setGravity(Gravity.CENTER_VERTICAL);
     seek = new SeekBar(this);
     seek.setKeyProgressIncrement(skipMs);
-    seek.getProgressDrawable().setColorFilter(BICHE, android.graphics.PorterDuff.Mode.SRC_IN);
-    seek.getThumb().setColorFilter(BICHE, android.graphics.PorterDuff.Mode.SRC_IN);
+    /* Solo lo reproducido en verde; el resto gris (antes el filtro teñía todo el fondo) */
+    seek.setProgressTintList(android.content.res.ColorStateList.valueOf(BICHE));
+    seek.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.argb(90, 255, 255, 255)));
+    seek.setSecondaryProgressTintList(android.content.res.ColorStateList.valueOf(Color.argb(140, 255, 255, 255)));
+    seek.setThumbTintList(android.content.res.ColorStateList.valueOf(Color.WHITE));
     seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
         if (fromUser && mp != null) { mp.setTime(p); armHide(); }
@@ -853,6 +856,10 @@ public class VlcPlayerActivity extends Activity {
     start();
   }
 
+  private boolean isLiveNow() {
+    return (url != null && url.contains("/live/")) || (length <= 0 && mp != null && mp.isPlaying());
+  }
+
   private void seekBy(long d) {
     if (mp == null || length <= 0) return;
     long p = Math.max(0, Math.min(length, mp.getTime() + d));
@@ -938,6 +945,16 @@ public class VlcPlayerActivity extends Activity {
       if (k == KeyEvent.KEYCODE_MEDIA_REWIND) { seekBy(-skipMs * 3L); return true; }
       if (k == KeyEvent.KEYCODE_MEDIA_NEXT || k == KeyEvent.KEYCODE_CHANNEL_UP) { playNext(); return true; }
       if (k == KeyEvent.KEYCODE_MEDIA_PREVIOUS || k == KeyEvent.KEYCODE_CHANNEL_DOWN) { playPrev(); return true; }
+      if (isLiveNow()) {
+        /* TV en vivo: ▲ canal siguiente, ▼ canal anterior, ◀ ▶ abren las opciones */
+        if (k == KeyEvent.KEYCODE_DPAD_UP) { playNext(); showBar(true); return true; }
+        if (k == KeyEvent.KEYCODE_DPAD_DOWN) { playPrev(); showBar(true); return true; }
+        if (!barOn && (k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT)) {
+          showBar(true);
+          if (bar.getChildCount() > 1) bar.getChildAt(1).requestFocus();
+          return true;
+        }
+      }
       if (!barOn) {
         if (k == KeyEvent.KEYCODE_DPAD_LEFT) { seekBy(-skipMs); return true; }
         if (k == KeyEvent.KEYCODE_DPAD_RIGHT) { seekBy(skipMs); return true; }
@@ -1380,6 +1397,31 @@ public class PlayerActivity extends Activity {
     if (ttlView != null && qIdx < qTitles.length) ttlView.setText(qTitles[qIdx]);
     if (nextBtn != null) nextBtn.setVisibility(qIdx + 1 < qUrls.length ? View.VISIBLE : View.GONE);
     start();
+  }
+
+  private void playPrev() {
+    if (qIdx <= 0) return;
+    saveResume();
+    qIdx--;
+    url = qUrls[qIdx];
+    resumeKey = "p" + url.hashCode();
+    retried = false; firstInfo = ""; resumeNote = ""; retryInfo = ""; nRetries = 0;
+    if (ttlView != null && qIdx < qTitles.length) ttlView.setText(qTitles[qIdx]);
+    if (nextBtn != null) nextBtn.setVisibility(View.VISIBLE);
+    start();
+  }
+
+  /* TV en vivo: ▲ canal siguiente, ▼ canal anterior, ◀ ▶ muestran los controles */
+  @Override
+  public boolean dispatchKeyEvent(android.view.KeyEvent e) {
+    if (e.getAction() == android.view.KeyEvent.ACTION_DOWN && url != null && url.contains("/live/")) {
+      int k = e.getKeyCode();
+      if (k == android.view.KeyEvent.KEYCODE_DPAD_UP) { playNext(); if (pvRef != null) pvRef.showController(); return true; }
+      if (k == android.view.KeyEvent.KEYCODE_DPAD_DOWN) { playPrev(); if (pvRef != null) pvRef.showController(); return true; }
+      if ((k == android.view.KeyEvent.KEYCODE_DPAD_LEFT || k == android.view.KeyEvent.KEYCODE_DPAD_RIGHT)
+          && pvRef != null && !pvRef.isControllerFullyVisible()) { pvRef.showController(); return true; }
+    }
+    return super.dispatchKeyEvent(e);
   }
 
   /* Menú lateral oscuro/azul (reemplaza el cuadro blanco centrado) */
