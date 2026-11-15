@@ -73,7 +73,7 @@ public class MainActivity extends BridgeActivity {
       }
     } catch (Exception e) { /* si falla, pregunta si quiere salir */ }
     new android.app.AlertDialog.Builder(this)
-        .setTitle("Salir de GLYSTV")
+        .setTitle("Salir de ULTRA4K")
         .setMessage("¿Quieres salir de la aplicación?")
         .setPositiveButton("Sí", (d, w) -> finishAffinity())
         .setNegativeButton("No", null)
@@ -1412,17 +1412,17 @@ public class RemoteSetupPlugin extends Plugin {
 RSJAVA
 
 cat > android/app/src/main/assets/remote.html <<'RSHTML'
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GLYSTV</title>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ULTRA4K</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#0a1260,#2a0e5a);font-family:system-ui,sans-serif;color:#fff;padding:16px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#0a1208,#1d3a0f);font-family:system-ui,sans-serif;color:#fff;padding:16px}
 form{width:100%;max-width:420px;background:#0f1014;border:1px solid #343238;border-radius:18px;padding:26px 22px}
-h1{margin:0 0 4px;text-align:center;font-size:28px}h1 b{color:#e6bd58}p{margin:0 0 18px;text-align:center;color:#bbb;font-size:15px}
+h1{margin:0 0 4px;text-align:center;font-size:28px}h1 b{color:#8cc63f}p{margin:0 0 18px;text-align:center;color:#bbb;font-size:15px}
 input[type=text],input[type=url],input[type=password]{width:100%;height:52px;margin-bottom:14px;border:1px solid #34343b;border-radius:10px;padding:0 14px;font-size:17px;color:#fff;background:#090a0d}
 label{display:block;margin:0 0 16px;font-size:15px;color:#ddd}
-button{width:100%;height:52px;border:0;border-radius:10px;background:linear-gradient(110deg,#c9000b,#f01824);color:#fff;font-size:17px;font-weight:700}
+button{width:100%;height:52px;border:0;border-radius:10px;background:linear-gradient(110deg,#5e9e2a,#8cc63f);color:#fff;font-size:17px;font-weight:700}
 #m{margin-top:14px;text-align:center;font-size:15px;min-height:20px}
 </style></head><body>
-<form id="f" autocomplete="off"><h1>GLYS<b>TV</b></h1><p>Escribe tus datos y se enviarán a la TV</p>
+<form id="f" autocomplete="off"><h1>ULTRA<b>4K</b></h1><p>Escribe tus datos y se enviarán a la TV</p>
 <input name="s" type="url" placeholder="URL del servidor (http://...)" value="%%S%%" autocapitalize="off" autocorrect="off" required>
 <input name="u" type="text" placeholder="Usuario" autocapitalize="off" autocorrect="off" required>
 <input name="p" id="p" type="password" placeholder="Contraseña" autocapitalize="off" required>
@@ -1433,7 +1433,7 @@ var f=document.getElementById('f'),m=document.getElementById('m'),b=document.get
 document.getElementById('sh').onchange=function(){document.getElementById('p').type=this.checked?'text':'password'};
 f.onsubmit=function(e){e.preventDefault();b.disabled=true;m.textContent='Enviando…';
 fetch('send'+location.search,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(new FormData(f)).toString()})
-.then(function(r){if(!r.ok)throw 0;m.textContent='✔ Enviado. Mira la TV.';m.style.color='#6fe08a'})
+.then(function(r){if(!r.ok)throw 0;m.textContent='✔ Enviado. Mira la TV.';m.style.color='#8cc63f'})
 .catch(function(){m.textContent='No se pudo enviar. Escanea el QR otra vez.';m.style.color='#ff8a8a';b.disabled=false})};
 </script></body></html>
 RSHTML

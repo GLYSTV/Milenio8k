@@ -1,6 +1,6 @@
 {
-  "name": "glystvultra",
-  "version": "2.0.0",
+  "name": "ultra4k",
+  "version": "3.0.0",
   "private": true,
   "dependencies": {
     "@capacitor/android": "^6.1.0",
