@@ -1,4 +1,4 @@
-name: Build GLYSTVULTRA Android
+name: Build ULTRA4K Android
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   android:
-    name: Build GLYSTVULTRA APK Android
+    name: Build ULTRA4K APK Android
     runs-on: ubuntu-latest
 
     steps:
@@ -31,13 +31,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build GLYSTVULTRA
+      - name: Build ULTRA4K
         run: bash build-glystv-v3.sh
 
       - name: Upload APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
-          name: GLYSTVULTRA APK ${{ github.run_number }}
+          name: ULTRA4K APK ${{ github.run_number }}
           files: android/app/build/outputs/apk/debug/app-debug.apk
+
           
