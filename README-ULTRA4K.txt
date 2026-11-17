@@ -25,3 +25,19 @@ Aplicación Android / Android TV / Google TV con interfaz premium en negro, verd
 3. Descarga el APK generado en la publicación `apk-<número de ejecución>`.
 
 Nota: esta entrega actualiza el diseño visual y documentación; no reemplaza servicios del proveedor, credenciales, URLs ni contenido de las listas. La compilación final debe ejecutarse en GitHub Actions para verificar el entorno Android completo.
+
+## Novedades (v22)
+- Foco/selección visible con el control: el elemento enfocado se pinta en verde lima claro con texto oscuro y aro blanco (antes quedaba negro sobre negro).
+- Buscadores siempre visibles en modo TV: "Buscar carpeta…" arriba de las categorías y "Buscar…" arriba del contenido. OK sobre el campo abre el teclado; ABAJO vuelve a la lista. Menú/Amarillo salta al buscador.
+- Actualización automática: la app consulta la última publicación de GitHub (tag `apk-N`), y si N es mayor que su número de compilación ofrece descargar e instalar el APK. También hay "Actualizar aplicación → Buscar" en Ajustes.
+- Seguridad: index.html va cifrado dentro del APK (tools/protect.mjs), sin backups de Android, sin menú contextual/atajos de inspección, y el APK de actualización solo se descarga de GitHub y debe ser de la misma app.
+
+## Pasos únicos para que las actualizaciones funcionen
+1. Crear UNA llave de firma y guardarla (si la pierdes, nadie podrá actualizar sin desinstalar):
+   keytool -genkeypair -v -keystore ultra4k.jks -alias ultra4k -keyalg RSA -keysize 2048 -validity 36500
+2. En GitHub → Settings → Secrets and variables → Actions, crear:
+   KEYSTORE_BASE64 (base64 -w0 ultra4k.jks), KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+3. Ejecutar el workflow. Cada ejecución sube un número (apk-N); la app instalada avisa cuando exista uno mayor.
+4. La primera vez, quien tenga instalada una versión anterior (firmada con otra llave) debe desinstalarla una vez.
+5. En el equipo, Android pedirá activar "Instalar apps desconocidas" para ULTRA4K la primera vez que se actualice.
+Compilación local: BUILD_NUMBER=<n> KEYSTORE_FILE=... KEYSTORE_PASSWORD=... KEY_ALIAS=... KEY_PASSWORD=... bash build-glystv-v3.sh  (salida: dist/ULTRA4K.apk)

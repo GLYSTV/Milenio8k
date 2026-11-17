@@ -13,6 +13,15 @@ feats = ('    <uses-feature android:name="android.software.leanback" android:req
 if "android.software.leanback" not in s:
     s = re.sub(r'(<manifest[^>]*>\s*\n)', lambda m: m.group(1) + feats, s, count=1)
 
+# 1.0) permiso para instalar la actualización descargada
+if "REQUEST_INSTALL_PACKAGES" not in s:
+    s = re.sub(r'(<manifest[^>]*>\s*\n)', lambda m: m.group(1) + '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n', s, count=1)
+
+# 1.05) seguridad: sin copias de seguridad de ADB/nube (guardan servidor/usuario/contraseña)
+s = re.sub(r'android:allowBackup="[^"]*"', 'android:allowBackup="false"', s)
+if 'android:allowBackup' not in s:
+    s = re.sub(r'<application', '<application\n        android:allowBackup="false"', s, count=1)
+
 # 1.1) nombre visible en el launcher
 if 'android:label=' not in s:
     s = re.sub(r'<application', '<application\n        android:label="ULTRA4K"', s, count=1)

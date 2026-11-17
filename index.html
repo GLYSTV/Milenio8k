@@ -843,7 +843,16 @@ class="btn">Subir archivo<input id="file" type="file" accept=".m3u,.m3u8,.txt" h
     <div class="v4-option"><div><b>PIN de bloqueo</b><small id="pinState">Sin PIN</small></div><button class="ghost" id="pinBtn">Cambiar</button></div>
     <div class="v4-option"><div><b>Caché de interfaz</b><small>Guarda preferencias, favoritos e historial en el dispositivo.</small></div><span class="v4-badge">ACTIVO</span></div>
     <div class="v4-option"><div><b>Actualización de contenido</b><small>Actualiza categorías y listas desde tu servidor.</small></div><button class="ghost" id="v4Refresh"><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></i> Actualizar</button></div>
+    <div class="v4-option"><div><b>Actualizar aplicación</b><small id="updState">Versión instalada: ...</small></div><button class="ghost" id="updCheck">Buscar</button></div>
     <div class="row"><button class="btn" id="closeSettings">Cerrar</button></div>
+  </div>
+</div>
+<div id="glysUpdate" class="v4-modal hide" aria-modal="true" role="dialog">
+  <div class="v4-panel">
+    <h3><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg></i> Actualización disponible</h3>
+    <p id="updTxt">Hay una nueva versión de ULTRA4K.</p>
+    <div class="v4-progress hide" id="updBar"><i id="updFill"></i></div>
+    <div class="row"><button class="btn" id="updGo">Actualizar ahora</button><button class="ghost" id="updLater">Más tarde</button></div>
   </div>
 </div>
 <div id="v4Profiles" class="v4-modal hide" aria-modal="true">
@@ -2363,7 +2372,7 @@ syncOverlayFav();
   function focusables(m){
     return Array.prototype.filter.call(m.querySelectorAll('[tabindex="0"],button'),function(e){return !e.disabled&&e.offsetParent!==null});
   }
-  var MODS=['v4Settings','acctModal','v4Profiles'],openId=null,pushed=false,skip=false,lastF=null;
+  var MODS=['v4Settings','acctModal','v4Profiles','glysUpdate'],openId=null,pushed=false,skip=false,lastF=null;
   function isOpen(id){return !$(id).classList.contains('hide')}
   MODS.forEach(function(id){
     var m=$(id),was=isOpen(id);
@@ -3067,11 +3076,7 @@ syncOverlayFav();
   },true);
 })();
 </script>
-<style id="glys-cats-focus">
-/* texto legible en la carpeta enfocada */
-#picker #cats .cc:focus,#picker #cats .cc:focus span,#picker #cats .cc:focus em,
-#lv.panes .cc:focus,#lv.panes .cc:focus span,#lv.panes .cc:focus em{color:#0a0c08!important;text-shadow:none!important}
-</style>
+
 <script id="glys-tv-nav">
 /* Navegación completa con el control remoto: flechas (espacial), OK, Atrás y foco siempre visible */
 (function(){
@@ -3206,6 +3211,155 @@ syncOverlayFav();
       if(confirm('¿Quieres salir de la aplicación?')){try{A.exitApp()}catch(e){}}
     }
   });
+})();
+</script>
+<style id="glys-v22-css">
+/* ===== FOCO / SELECCIÓN BIEN VISIBLE (control remoto) =====
+   Antes: fondo oscuro + texto casi negro = invisible. Ahora el elemento enfocado se
+   pinta en verde lima claro con texto oscuro y aro blanco; el elegido (.on) sigue en verde. */
+#picker #cats .cc:focus,#picker #cats .cc:focus-visible,
+#lv.panes .cc:focus,#lv.panes .cc:focus-visible,.cc:focus,.cc:focus-visible{
+  background:#e4ff9a!important;background-image:none!important;border-color:#fff!important;color:#07100a!important;
+  outline:3px solid #fff!important;outline-offset:2px!important;
+  box-shadow:0 0 0 6px rgba(196,255,80,.55),0 0 28px rgba(196,255,80,.6)!important;
+  transform:scale(1.03)!important;font-weight:700!important;text-shadow:none!important;z-index:40;position:relative}
+#picker #cats .cc:focus span,#picker #cats .cc:focus em,#picker #cats .cc:focus-visible span,#picker #cats .cc:focus-visible em,
+#lv.panes .cc:focus span,#lv.panes .cc:focus em,.cc:focus span,.cc:focus em{color:#07100a!important;text-shadow:none!important}
+/* filas de canales y pósters */
+#list .ch:focus,#list .ch:focus-visible,#list .pc:focus,#list .pc:focus-visible{
+  background:#e4ff9a!important;background-image:none!important;border-color:#fff!important;
+  outline:3px solid #fff!important;outline-offset:2px!important;
+  box-shadow:0 0 0 6px rgba(196,255,80,.55),0 0 26px rgba(196,255,80,.55)!important}
+#list .ch:focus .nx,#list .ch:focus .nm,#list .ch:focus .g,#list .pc:focus .tt{color:#07100a!important;font-weight:700}
+/* categorías, tarjetas de inicio y botones */
+.tile:focus,.tile:focus-visible,.hc:focus,.hc:focus-visible{
+  outline:4px solid #fff!important;outline-offset:3px!important;border-color:#e4ff9a!important;
+  box-shadow:0 0 0 8px rgba(196,255,80,.55),0 0 32px rgba(196,255,80,.6)!important}
+button:focus-visible,.ghost:focus-visible,.btn:focus-visible{
+  background:#e4ff9a!important;background-image:none!important;color:#07100a!important;border-color:#fff!important;
+  outline:3px solid #fff!important;outline-offset:2px!important}
+button:focus-visible .ln svg,.ghost:focus-visible .ln svg,.btn:focus-visible .ln svg{stroke:#07100a}
+#tabs button.on:focus,#tabs button.on:focus-visible{background:#e4ff9a!important;color:#07100a!important}
+.v4-option:focus,.v4-option:focus-visible{background:#e4ff9a!important;border-color:#fff!important;outline:3px solid #fff!important}
+.v4-option:focus b,.v4-option:focus small,.v4-option:focus-visible b,.v4-option:focus-visible small{color:#07100a!important}
+/* ===== BUSCADORES SIEMPRE VISIBLES EN MODO TV (horizontal) ===== */
+@media (orientation:landscape) and (min-width:700px){
+  #lv.panes #picker #cq{display:block!important;width:100%!important;height:40px!important;margin:0 0 8px!important;padding:0 14px!important;font-size:15px!important;box-sizing:border-box}
+  #lv.panes .search-header-container,#lv.panes .search-header-container:has(#q.expanded){display:flex!important;width:100%;margin:0 0 8px!important}
+  #lv.panes .search-wrapper{width:100%}
+  #lv.panes #searchBtn{display:none!important}
+  #lv.panes #q,#lv.panes #q.expanded{display:block!important;width:100%!important;height:40px!important;padding:0 14px!important;font-size:15px!important;box-sizing:border-box}
+}
+#cq:focus,#q:focus{outline:3px solid #fff!important;border-color:#e4ff9a!important;box-shadow:0 0 0 6px rgba(196,255,80,.45)!important}
+.v4-modal button:focus,.v4-modal .btn:focus,.v4-modal .ghost:focus{background:#e4ff9a!important;background-image:none!important;color:#07100a!important;border-color:#fff!important;outline:3px solid #fff!important;outline-offset:2px!important}
+/* barra de progreso de la actualización */
+.v4-progress{height:10px;border-radius:99px;background:#26331a;overflow:hidden;margin:12px 0}
+.v4-progress.hide{display:none}
+.v4-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#71b721,#e4ff9a);transition:width .25s}
+</style>
+<script id="glys-v22-js">
+/* ===== Búsqueda: en modo TV el buscador del contenido está siempre a la vista; Menú/Amarillo = ir a escribir ===== */
+(function(){
+  var mq=window.matchMedia('(orientation:landscape) and (min-width:700px)');
+  function $(i){return document.getElementById(i)}
+  var sb=$('searchBtn'),old=sb&&sb.onclick;
+  if(sb)sb.onclick=function(e){
+    if(mq.matches&&$('lv').classList.contains('panes')){var q=$('q');q.classList.add('expanded');try{q.focus()}catch(x){}return}
+    if(old)return old.call(this,e);
+  };
+  ['q','cq'].forEach(function(id){
+    var el=$(id);if(!el)return;
+    el.setAttribute('enterkeyhint','search');
+    el.setAttribute('autocomplete','off');el.setAttribute('autocapitalize','off');
+    /* en el control: OK = abrir teclado; Abajo = volver a la lista */
+    el.addEventListener('keydown',function(e){
+      if(e.key==='ArrowDown'&&id==='q'){var f=document.querySelector('#list [data-i]');if(f){e.preventDefault();e.stopPropagation();f.focus()}}
+      if(e.key==='ArrowDown'&&id==='cq'){var c=document.querySelector('#cats .cc');if(c){e.preventDefault();e.stopPropagation();c.focus()}}
+    },true);
+  });
+})();
+
+/* ===== Actualización automática de la app ===== */
+(function(){
+  var BUILD=parseInt('__BUILD__',10)||0;               /* lo estampa el script de compilación */
+  var REPO='glystv/Milenio8k';                          /* repositorio donde se publican los APK */
+  var API='https://api.github.com/repos/'+REPO+'/releases/latest';
+  function $(i){return document.getElementById(i)}
+  var C=window.Capacitor;
+  var native=!!(C&&((C.isNativePlatform&&C.isNativePlatform())||(C.getPlatform&&C.getPlatform()!=='web')));
+  var P=null;try{if(native&&C.registerPlugin)P=C.registerPlugin('ApkUpdater')}catch(e){}
+  var info=null,busy=false;
+  function say(t){var x=$('v4Toast');if(!x)return;x.textContent=t;x.classList.remove('hide');clearTimeout(say.t);say.t=setTimeout(function(){x.classList.add('hide')},3200)}
+  function state(t){var e=$('updState');if(e)e.textContent=t}
+  function lsg(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function lss(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  state('Versión instalada: '+(BUILD||'desarrollo'));
+
+  function show(){
+    var m=$('glysUpdate');if(!m)return;
+    $('updTxt').textContent='Versión '+info.n+' lista para instalar (tienes la '+BUILD+'). La app se descargará y Android te pedirá confirmar la instalación.';
+    $('updBar').classList.add('hide');$('updGo').disabled=false;$('updGo').textContent='Actualizar ahora';
+    m.classList.remove('hide');
+  }
+  function hide(){var m=$('glysUpdate');if(m)m.classList.add('hide')}
+
+  function check(manual){
+    if(busy)return Promise.resolve();
+    if(manual)state('Buscando actualización…');
+    return fetch(API,{cache:'no-store',headers:{'Accept':'application/vnd.github+json'}})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+      .then(function(j){
+        var m=/(\d+)\s*$/.exec(j.tag_name||''),n=m?+m[1]:0;
+        var a=(j.assets||[]).filter(function(x){return /\.apk$/i.test(x.name||'')})[0];
+        if(!n||!a)throw new Error('Sin APK');
+        info={n:n,url:a.browser_download_url,size:a.size||0};
+        if(BUILD&&n>BUILD){
+          state('Nueva versión disponible: '+n);
+          var snooze=+lsg('upd_snooze_'+n)||0;
+          if(manual||Date.now()>snooze)show();
+        }else if(!BUILD){state('Versión de desarrollo (sin número de compilación)');if(manual)say('Compilación sin número: no se puede comparar')}
+        else{state('Estás al día (versión '+BUILD+')');if(manual)say('Ya tienes la última versión')}
+      })
+      .catch(function(){state('No se pudo comprobar. Revisa tu conexión.');if(manual)say('No se pudo buscar actualizaciones')});
+  }
+
+  function install(){
+    if(!info)return;
+    busy=true;$('updGo').disabled=true;$('updGo').textContent='Descargando…';
+    if(P&&P.install){
+      $('updBar').classList.remove('hide');
+      var L=null;try{Promise.resolve(P.addListener('progress',function(e){var p=e&&e.percent||0;$('updFill').style.width=p+'%';$('updGo').textContent='Descargando '+Math.round(p)+'%'})).then(function(h){L=h}).catch(function(){})}catch(e){}
+      P.install({url:info.url}).then(function(){
+        busy=false;$('updGo').textContent='Abriendo instalador…';
+      }).catch(function(err){
+        busy=false;$('updGo').disabled=false;$('updGo').textContent='Reintentar';
+        say((err&&err.message)||'No se pudo descargar la actualización');
+      }).then(function(){try{L&&L.remove&&L.remove()}catch(e){}});
+    }else{
+      /* sin plugin nativo: abre la descarga del APK en el navegador del sistema */
+      busy=false;try{window.open(info.url,'_system')}catch(e){location.href=info.url}
+      $('updGo').disabled=false;$('updGo').textContent='Actualizar ahora';
+    }
+  }
+  if($('updGo'))$('updGo').onclick=install;
+  if($('updLater'))$('updLater').onclick=function(){if(info)lss('upd_snooze_'+info.n,String(Date.now()+864e5));hide()};
+  if($('updCheck'))$('updCheck').onclick=function(){check(true)};
+
+  /* comprobación automática: al abrir y cada 6 horas mientras la app siga abierta */
+  if(native&&BUILD){setTimeout(function(){check(false)},5000);setInterval(function(){check(false)},216e5)}
+})();
+
+/* ===== Protección básica del lado web (la real está en el script de compilación) ===== */
+(function(){
+  /* sin menú contextual, sin atajos de inspección / ver código fuente / guardar */
+  document.addEventListener('contextmenu',function(e){e.preventDefault()},true);
+  document.addEventListener('keydown',function(e){
+    var k=(e.key||'').toLowerCase(),c=e.ctrlKey||e.metaKey;
+    if(e.key==='F12'||(c&&e.shiftKey&&/^(i|j|c)$/.test(k))||(c&&/^(u|s)$/.test(k))){e.preventDefault();e.stopPropagation()}
+  },true);
+  document.addEventListener('dragstart',function(e){e.preventDefault()},true);
+  /* no permitir que otra página incruste la app */
+  try{if(window.top!==window.self)window.top.location=window.self.location}catch(e){document.documentElement.innerHTML=''}
 })();
 </script>
 </body></html>
