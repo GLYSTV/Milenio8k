@@ -1,8 +1,6 @@
 name: Build ULTRA4K Android
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -26,19 +24,35 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build ULTRA4K
-        run: bash build-glystv-v3.sh
+      - name: Copy hls.js
+        run: cp node_modules/hls.js/dist/hls.min.js www/hls.min.js
 
-      - name: Upload APK
+      - name: Add Android
+        run: npx cap add android
+
+      - name: Apply icon
+        run: bash icons/apply.sh
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Save APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ULTRA4K-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload APK to Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
           name: ULTRA4K APK ${{ github.run_number }}
           files: android/app/build/outputs/apk/debug/app-debug.apk
-
-          
