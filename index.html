@@ -1676,7 +1676,7 @@ syncOverlayFav();
 </script>
 <script id="glys-qr-pair">
 (function(){
-  var GUESS='https://glystv.github.io/Milenio8k/';
+  var GUESS='https://glystv.github.io/ultra-4k/';
   var PAIR_BASE=(/^https?:$/.test(location.protocol)&&location.hostname!=='localhost')?(location.origin+location.pathname.replace(/[^\/]*$/,'')):GUESS;
   var PEER_URLS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'];
   var QR_URLS=['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js','https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'];
@@ -3330,7 +3330,7 @@ button:focus-visible .ln svg,.ghost:focus-visible .ln svg,.btn:focus-visible .ln
 /* ===== Actualización automática de la app ===== */
 (function(){
   var BUILD=parseInt('__BUILD__',10)||0;               /* lo estampa el script de compilación */
-  var REPO='glystv/Milenio8k';                          /* repositorio donde se publican los APK */
+  var REPO='glystv/ultra-4k';                          /* repositorio donde se publican los APK */
   var API='https://api.github.com/repos/'+REPO+'/releases/latest';
   function $(i){return document.getElementById(i)}
   var C=window.Capacitor;
