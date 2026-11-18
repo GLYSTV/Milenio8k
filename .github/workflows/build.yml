@@ -48,7 +48,15 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: bash build-glystv-v3.sh
+        # Reintenta hasta 3 veces: Maven/Google a veces responden 429 (demasiadas peticiones) y es temporal
+        run: |
+          ok=0
+          for i in 1 2 3; do
+            if bash build-glystv-v3.sh; then ok=1; break; fi
+            echo "::warning::Intento $i falló, reintentando en 90 s..."
+            sleep 90
+          done
+          [ "$ok" = 1 ]
 
       - name: Save APK as artifact
         uses: actions/upload-artifact@v4
