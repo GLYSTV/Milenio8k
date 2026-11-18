@@ -799,7 +799,7 @@ data-t="vod">Películas</button><button data-t="series">Series</button><button
 data-t="favs"></button></div></div><div id="cbar"><button class="ghost"
 id="cprev">‹</button><button id="cname">Elegir categoría</button><button class="ghost"
 id="cnext">›</button><button class="ghost" id="refreshTab" title="Actualizar contenido"
-style="font-size:15px;padding:8px 12px"></button></div><div id="body"><div id="left">
+style="font-size:15px;padding:8px 12px"></button></div><div id="glysTop"><span class="brand4k" id="topBrand">ULTRA4K</span><button class="ghost topsb" id="topCatSearch" title="Buscar carpeta" aria-label="Buscar carpeta"><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></i><small>Carpetas</small></button><span class="topsp"></span><button class="ghost topsb" id="topSearch" title="Buscar" aria-label="Buscar"><i class="ln"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></i></button></div><div id="body"><div id="left">
 
                                               🔍
 <div class="search-header-container"><div class="search-wrapper"><button id="searchBtn"
@@ -2892,11 +2892,7 @@ syncOverlayFav();
       +(plot?'<div class="dt-row"><b>Sinopsis :</b><span><div class="dt-plot" id="dtPlot">'+esc(plot)+'</div><button class="dt-more" id="dtMore" style="display:none">Más</button></span></div>':'')
       +'</div><div class="dt-pic" id="dtPic" style="'+bg(pic)+'"><i></i></div></div>';
     if(isS){
-      h+='<div class="dt-btns"><button class="dt-btn" id="dtFull">'+IC.full+'Pantalla completa</button>'
-        +'<button class="dt-btn" id="dtLang">'+IC.lang+'Idioma</button>'
-        +'<button class="dt-btn" id="dtRes">'+IC.res+'Resolución</button>'
-        +'<button class="dt-btn" id="dtFav">'+IC.star+'Favorito'+(isFav(c)?' ✓':'')+'</button>'
-        +'<button class="dt-btn" id="dtNot">'+IC.bell+'Notificaciones'+(notifOn(c)?' ✓':'')+'</button></div>';
+      h+='<div class="dt-btns"><button class="dt-btn" id="dtPlay">▶ Reproducir</button><button class="dt-btn" id="dtFav">'+(isFav(c)?'★':'☆')+' Favorito</button><button class="dt-btn" id="dtOpt">⚙ Reproductor</button></div>';
       if(!S){h+='<div class="dt-load">Cargando episodios…</div>'}
       else if(!S.seasons.length){h+='<div class="dt-load">Esta serie no tiene episodios.</div>'}
       else{
@@ -2936,7 +2932,7 @@ syncOverlayFav();
     if(!isOpen()){try{history.pushState({dt:1},'');cfg.pushed=true}catch(e){}}
     if(!keepList)cfg.list=chans.filter(function(x){return x&&(c.series?x.series:!x.series)});
     draw(c,null);dt.classList.remove('hide');dt.scrollTop=0;
-    focusKey(c.series?'#dtFav':'#dtPlay');
+    focusKey('#dtPlay');
     try{
       var info=null;
       if(c.series){var d=await api('get_series_info','&series_id='+c.series);if(tok!==cfg.tok)return;info=d&&d.info;cfg.s=parseSeries(c,d)}
@@ -2982,9 +2978,9 @@ syncOverlayFav();
   dt.addEventListener('click',function(e){
     var t=e.target.closest('button,.dt-card');if(!t)return;
     var c=cfg.cur,S=cfg.s;
-    if(t.id==='dtPlay')playMovie();
+    if(t.id==='dtPlay'){if(c.series){if(S&&S.seasons&&S.seasons.length)playEp(S.ep||0)}else playMovie()}
     else if(t.id==='dtFavM'){toggleFav(c);t.textContent=(isFav(c)?'★':'☆')+' Favorito'}
-    else if(t.id==='dtFav'){toggleFav(c);t.innerHTML=IC.star+'Favorito'+(isFav(c)?' ✓':'')}
+    else if(t.id==='dtFav'){toggleFav(c);t.textContent=(isFav(c)?'★':'☆')+' Favorito'}
     else if(t.id==='dtOpt'||t.id==='dtLang'||t.id==='dtRes')openOpts();
     else if(t.id==='dtFull')openOpts('aspectBtn');
     else if(t.id==='dtNot'){var on=toggleNotif(c);t.innerHTML=IC.bell+'Notificaciones'+(on?' ✓':'');toast(on?'Notificaciones activadas para esta serie':'Notificaciones desactivadas')}
@@ -3242,39 +3238,75 @@ button:focus-visible .ln svg,.ghost:focus-visible .ln svg,.btn:focus-visible .ln
 #tabs button.on:focus,#tabs button.on:focus-visible{background:#e4ff9a!important;color:#07100a!important}
 .v4-option:focus,.v4-option:focus-visible{background:#e4ff9a!important;border-color:#fff!important;outline:3px solid #fff!important}
 .v4-option:focus b,.v4-option:focus small,.v4-option:focus-visible b,.v4-option:focus-visible small{color:#07100a!important}
-/* ===== BUSCADORES SIEMPRE VISIBLES EN MODO TV (horizontal) ===== */
+/* ===== BARRA SUPERIOR: ULTRA4K + lupa (modo TV / horizontal) ===== */
+#glysTop{display:none}
 @media (orientation:landscape) and (min-width:700px){
-  #lv.panes #picker #cq{display:block!important;width:100%!important;height:40px!important;margin:0 0 8px!important;padding:0 14px!important;font-size:15px!important;box-sizing:border-box}
-  #lv.panes .search-header-container,#lv.panes .search-header-container:has(#q.expanded){display:flex!important;width:100%;margin:0 0 8px!important}
+  #lv.panes #glysTop{display:flex;align-items:center;gap:10px;flex:0 0 auto;height:46px;margin:0 0 8px;padding:0 4px}
+  #glysTop .brand4k{font-weight:800;font-size:22px;letter-spacing:.06em;color:#c7e8a2}
+  #glysTop .topsp{flex:1}
+  #glysTop .topsb{display:inline-flex;align-items:center;gap:6px;height:42px;min-width:46px;padding:0 12px;justify-content:center;border-radius:12px}
+  #glysTop .topsb .ln{margin:0;width:22px;height:22px}
+  #glysTop .topsb small{font-size:12px}
+  /* los campos de texto solo aparecen al pulsar la lupa */
+  #lv.panes #picker #cq,#lv.panes .search-header-container{display:none!important}
+  #lv.panes.sq .search-header-container{display:flex!important;width:100%;margin:0 0 8px!important}
+  #lv.panes.sc #picker #cq{display:block!important;width:100%!important;height:40px!important;margin:0 0 8px!important;padding:0 14px!important;font-size:15px!important;box-sizing:border-box}
   #lv.panes .search-wrapper{width:100%}
   #lv.panes #searchBtn{display:none!important}
   #lv.panes #q,#lv.panes #q.expanded{display:block!important;width:100%!important;height:40px!important;padding:0 14px!important;font-size:15px!important;box-sizing:border-box}
 }
 #cq:focus,#q:focus{outline:3px solid #fff!important;border-color:#e4ff9a!important;box-shadow:0 0 0 6px rgba(196,255,80,.45)!important}
 .v4-modal button:focus,.v4-modal .btn:focus,.v4-modal .ghost:focus{background:#e4ff9a!important;background-image:none!important;color:#07100a!important;border-color:#fff!important;outline:3px solid #fff!important;outline-offset:2px!important}
+/* icono de reproducir de la imagen del detalle: más grande */
+#dt .dt-pic i{width:clamp(72px,10vw,132px)!important;height:clamp(72px,10vw,132px)!important;margin:calc(clamp(72px,10vw,132px)/-2) 0 0 calc(clamp(72px,10vw,132px)/-2)!important;box-shadow:0 6px 26px rgba(0,0,0,.55),0 0 0 4px rgba(255,255,255,.35)}
+#dt .dt-pic i:after{left:54%!important;top:50%!important;transform:translate(-50%,-50%);font-size:clamp(26px,3.6vw,48px)!important}
+#dt .dt-pic:focus i,#dt .dt-pic:focus-visible i{background:#e4ff9a}
+#dt .dt-pic:focus i:after,#dt .dt-pic:focus-visible i:after{border-left-color:#07100a}
+/* series: mismos botones que películas, icono y cuadros de episodio más grandes */
+#dt.dt-series .dt-btns,#dt .dt-btns{gap:.9vw!important}
+#dt.dt-series .dt-btn{background:#1a2211!important;border:1.5px solid #476525!important;border-radius:6px!important;padding:.5em 1em!important;gap:0!important}
+#dt .dt-btn:focus,#dt.dt-series .dt-btn:focus,#dt .dt-btn:focus-visible{background:#e4ff9a!important;color:#07100a!important;border-color:#fff!important;outline:3px solid #fff!important;outline-offset:2px!important}
+#dt.dt-series .dt-pic i{width:clamp(84px,11.5vw,150px)!important;height:clamp(84px,11.5vw,150px)!important;margin:calc(clamp(84px,11.5vw,150px)/-2) 0 0 calc(clamp(84px,11.5vw,150px)/-2)!important}
+#dt.dt-series .dt-pic i:after{font-size:clamp(30px,4.2vw,56px)!important}
+#dt .dt-ep{min-width:6.6vw!important;height:3.9vw!important;min-height:42px!important;font-size:clamp(15px,1.8vw,26px)!important;border-radius:6px!important}
+#dt .dt-ep svg{width:1.7em!important;height:1.7em!important}
+#dt .dt-ep.sel,#dt .dt-ep:focus{background:#e4ff9a!important;color:#07100a!important}
+#dt .dt-ep.sel svg,#dt .dt-ep:focus svg{fill:#07100a!important}
 /* barra de progreso de la actualización */
 .v4-progress{height:10px;border-radius:99px;background:#26331a;overflow:hidden;margin:12px 0}
 .v4-progress.hide{display:none}
 .v4-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#71b721,#e4ff9a);transition:width .25s}
 </style>
 <script id="glys-v22-js">
-/* ===== Búsqueda: en modo TV el buscador del contenido está siempre a la vista; Menú/Amarillo = ir a escribir ===== */
+/* ===== Búsqueda con lupa: ULTRA4K arriba + 🔎 que abre/cierra el campo ===== */
 (function(){
   var mq=window.matchMedia('(orientation:landscape) and (min-width:700px)');
   function $(i){return document.getElementById(i)}
+  var lv=$('lv');
+  function toggle(cls,inp){
+    var on=!lv.classList.contains(cls);
+    lv.classList.toggle(cls,on);
+    if(on){try{inp.focus()}catch(x){}}
+    else{
+      if(inp.value){inp.value='';inp.dispatchEvent(new Event('input',{bubbles:true}))}
+      try{(cls==='sq'?$('topSearch'):$('topCatSearch')).focus()}catch(x){}
+    }
+  }
+  function openQ(){if(!lv.classList.contains('sq'))lv.classList.add('sq');var q=$('q');q.classList.add('expanded');try{q.focus()}catch(x){}}
+  if($('topSearch'))$('topSearch').onclick=function(){toggle('sq',$('q'))};
+  if($('topCatSearch'))$('topCatSearch').onclick=function(){toggle('sc',$('cq'))};
   var sb=$('searchBtn'),old=sb&&sb.onclick;
   if(sb)sb.onclick=function(e){
-    if(mq.matches&&$('lv').classList.contains('panes')){var q=$('q');q.classList.add('expanded');try{q.focus()}catch(x){}return}
+    if(mq.matches&&lv.classList.contains('panes')){openQ();return}
     if(old)return old.call(this,e);
   };
   ['q','cq'].forEach(function(id){
     var el=$(id);if(!el)return;
-    el.setAttribute('enterkeyhint','search');
-    el.setAttribute('autocomplete','off');el.setAttribute('autocapitalize','off');
-    /* en el control: OK = abrir teclado; Abajo = volver a la lista */
+    el.setAttribute('enterkeyhint','search');el.setAttribute('autocomplete','off');el.setAttribute('autocapitalize','off');
     el.addEventListener('keydown',function(e){
-      if(e.key==='ArrowDown'&&id==='q'){var f=document.querySelector('#list [data-i]');if(f){e.preventDefault();e.stopPropagation();f.focus()}}
-      if(e.key==='ArrowDown'&&id==='cq'){var c=document.querySelector('#cats .cc');if(c){e.preventDefault();e.stopPropagation();c.focus()}}
+      /* ABAJO: ir a la lista; ESC/Atrás: cerrar el campo */
+      if(e.key==='ArrowDown'){var t=id==='q'?document.querySelector('#list [data-i]'):document.querySelector('#cats .cc');if(t){e.preventDefault();e.stopPropagation();t.focus()}}
+      if(e.key==='Escape'&&!el.value){e.stopPropagation();toggle(id==='q'?'sq':'sc',el)}
     },true);
   });
 })();
