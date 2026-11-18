@@ -34,13 +34,17 @@ jobs:
       - name: Preparar llave de firma
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/ultra4k.jks"
-            echo "KEYSTORE_FILE=$RUNNER_TEMP/ultra4k.jks" >> "$GITHUB_ENV"
-          else
-            echo "::warning::Falta el secret KEYSTORE_BASE64: se generará un APK debug y las actualizaciones automáticas no podrán instalarse encima."
+          # Sin llave fija NO se compila: un APK con llave distinta rompe las actualizaciones
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Faltan secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD"
+            exit 1
           fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/ultra4k.jks"
+          echo "KEYSTORE_FILE=$RUNNER_TEMP/ultra4k.jks" >> "$GITHUB_ENV"
 
       - name: Build APK
         env:
@@ -63,6 +67,11 @@ jobs:
         with:
           name: ULTRA4K-apk
           path: dist/ULTRA4K.apk
+
+      - name: Verificar firma del APK
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort | tail -1)
+          "$APKSIGNER" verify --print-certs dist/ULTRA4K.apk | grep -i "SHA-256"
 
       # El tag apk-<número> es el que la app compara con su propia versión para avisar de actualizaciones.
       - name: Upload APK to Releases
