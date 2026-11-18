@@ -2829,7 +2829,16 @@ syncOverlayFav();
 <script id="glys-detail">
 (function(){
   'use strict';
-  var dt=$('dt'),cfg={cur:null,list:[],tok:0,s:null,moved:false};
+  var dt=$('dt'),cfg={cur:null,list:[],tok:0,s:null,moved:false,rest:null};
+  /* Al reproducir con el reproductor nativo el detalle se queda abierto debajo; al cerrarlo
+     (Atrás) se devuelve la lista a como estaba antes de reproducir. */
+  function restoreList(){
+    var r=cfg.rest;if(!r)return;cfg.rest=null;
+    chans=r.chans;epMode=r.epMode;seriesPrev=r.seriesPrev;cur=-1;lim=100;
+    $('msg').textContent=r.msg;
+    if(r.backHide)$('back').classList.add('hide');else $('back').classList.remove('hide');
+    render();
+  }
   var IC={
     full:'<svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8z"/></svg>',
     lang:'<svg viewBox="0 0 24 24"><path d="M3 5h18v14H3V5zm2 9v2h6v-2H5zm8 0v2h6v-2h-6zM5 10v2h3v-2H5zm5 0v2h9v-2h-9z"/></svg>',
@@ -2948,16 +2957,18 @@ syncOverlayFav();
   }
   window.addEventListener('popstate',function(e){
     if(cfg.skip){cfg.skip=false;e.stopImmediatePropagation();return}
-    if(isOpen()){cfg.pushed=false;cfg.tok++;dt.classList.add('hide');dt.innerHTML='';e.stopImmediatePropagation();refocusList()}
+    if(isOpen()){cfg.pushed=false;cfg.tok++;dt.classList.add('hide');dt.innerHTML='';e.stopImmediatePropagation();restoreList();refocusList()}
   },true);
   function refocusList(){var el=document.querySelector('#list .on')||document.querySelector('#list [data-i]');if(el)try{el.focus()}catch(e){}}
   function close(){cfg.tok++;dt.classList.add('hide');dt.innerHTML='';
     if(cfg.pushed){cfg.pushed=false;cfg.skip=true;try{history.back()}catch(e){cfg.skip=false}}
+    restoreList();
     var el=document.querySelector('#list .on')||document.querySelector('#list [data-i]');if(el)try{el.focus()}catch(e){}}
 
   function playMovie(){
     var c=cfg.cur;if(!c)return;
     var i=chans.indexOf(c);if(i<0){chans.push(c);i=chans.length-1}
+    if(NP){play(i);return}
     close();play(i);
   }
   function playEp(i){
@@ -2968,9 +2979,14 @@ syncOverlayFav();
       all.push({name:'T'+sn+' E'+e.n+' · '+e.title,group:c.name,logo:e.img||c.logo,url:e.url});
     })});
     if(!all.length)return;
+    if(NP&&!cfg.rest)cfg.rest={chans:chans,epMode:epMode,seriesPrev:seriesPrev,msg:$('msg').textContent,backHide:$('back').classList.contains('hide')};
     if(!epMode)seriesPrev=chans;
     chans=all;cur=-1;lim=Math.max(100,all.length);epMode=true;
     $('back').classList.add('hide');$('msg').textContent=c.name+' · '+all.length+' episodios';
+    if(NP){ /* el detalle queda abierto: al salir del reproductor se vuelve a la ficha */
+      S.ep=i;var kk=curKey();draw(c,cfg.info);focusKey(kk);
+      render();play(idx);return;
+    }
     close();render();play(idx);
   }
   function openOpts(sel){var b=$('playerOptionsBtn');if(!b)return;b.click();if(sel){var x=$(sel);if(x)setTimeout(function(){x.click()},30)}}
