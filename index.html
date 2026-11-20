@@ -755,6 +755,7 @@ window.addEventListener('keydown',function(e){
   var t=e.target;if(!t||!t.closest)return;
   var b=t.closest('#cats .cc');if(!b)return;
   var cats=document.getElementById('cats');if(!cats)return;
+  try{var cs0=getComputedStyle(cats);if(cs0.display==='grid'&&cs0.gridTemplateColumns.trim().split(/\s+/).length>1)return}catch(x){} /* cuadrícula: el foco espacial elige la carpeta de abajo */
   var items=[].filter.call(cats.querySelectorAll('.cc'),function(x){var r=x.getBoundingClientRect();return r.width>1&&r.height>1});
   var n=items[items.indexOf(b)+(k==='ArrowDown'?1:-1)];
   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
@@ -1114,16 +1115,14 @@ async function ejecutarLogin(isAuto) {
     } 
 
     var cats = {}; 
-    try {
-      var catRes = await fetch(s+'/player_api.php'+q+'&action=get_live_categories');
-      var catJson = await catRes.json();
-      if(Array.isArray(catJson)){
-        catJson.forEach(function(c){cats[c.category_id]=c.category_name});
-      }
-    }catch(e){} 
-
-    var lsRes = await fetch(s+'/player_api.php'+q+'&action=get_live_streams');
-    var ls = await lsRes.json();
+    /* categorías y canales se piden a la vez (antes uno tras otro) */
+    var catP = fetch(s+'/player_api.php'+q+'&action=get_live_categories').then(function(r){return r.json()}).catch(function(){return null});
+    var lsP = fetch(s+'/player_api.php'+q+'&action=get_live_streams').then(function(r){return r.json()});
+    var catJson = await catP;
+    if(Array.isArray(catJson)){
+      catJson.forEach(function(c){cats[c.category_id]=c.category_name});
+    }
+    var ls = await lsP;
     if(!Array.isArray(ls)) ls = [];
 
     var live = ls.map(function(c){ 
@@ -1155,6 +1154,7 @@ async function ejecutarLogin(isAuto) {
     $('m3ubox').classList.add('hide'); 
     show(true);
     showHome(); 
+    try{if(window.u4kPrefetch)window.u4kPrefetch()}catch(e){}
 
   } catch(e) {
     if(!isAuto && errEl) {
@@ -1560,7 +1560,7 @@ syncOverlayFav();
 })();
 </script>
 
-<script>(function(){function hideIntro(){var intro=document.getElementById('intro');if(!intro||intro.classList.contains('done'))return;intro.classList.add('done');window.setTimeout(function(){if(intro&&intro.parentNode)intro.parentNode.removeChild(intro)},700)}var intro=document.getElementById('intro');if(intro){intro.addEventListener('click',hideIntro);window.setTimeout(hideIntro,1800)}})();</script>
+<script>(function(){function hideIntro(){var intro=document.getElementById('intro');if(!intro||intro.classList.contains('done'))return;intro.classList.add('done');window.setTimeout(function(){if(intro&&intro.parentNode)intro.parentNode.removeChild(intro)},700)}var intro=document.getElementById('intro');if(intro){intro.addEventListener('click',hideIntro);window.setTimeout(hideIntro,1200)}})();</script>
 
 <script id="glys-autologin">
 (function(){
@@ -3076,6 +3076,7 @@ syncOverlayFav();
     if(e.altKey||e.ctrlKey||e.metaKey)return;
     var t=e.target;if(!t||!t.closest)return;
     var b=t.closest('#cats .cc');if(!b)return;
+    try{var cs=getComputedStyle(b.parentNode);if(cs.display==='grid'&&cs.gridTemplateColumns.trim().split(/\s+/).length>1)return}catch(x){}
     var n=sib(b,k==='ArrowDown'?1:-1);
     if(n){
       e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
@@ -3408,6 +3409,101 @@ button:focus-visible .ln svg,.ghost:focus-visible .ln svg,.btn:focus-visible .ln
   document.addEventListener('dragstart',function(e){e.preventDefault()},true);
   /* no permitir que otra página incruste la app */
   try{if(window.top!==window.self)window.top.location=window.self.location}catch(e){document.documentElement.innerHTML=''}
+})();
+</script>
+<script id="u4k-speed">
+/* ULTRA4K: carga más rápida + carpetas con control remoto estables */
+(function(){
+  'use strict';
+  /* a) Peticiones iguales a la vez comparten la misma respuesta (no se descarga dos veces) */
+  var inflight={},oApi=window.api;
+  if(typeof oApi==='function'){
+    window.api=function(a,extra){
+      var k=a+'|'+(extra||'')+'|'+(window.sess?window.sess.s+window.sess.u:'');
+      if(inflight[k])return inflight[k];
+      var p=oApi.apply(this,arguments);inflight[k]=p;
+      var done=function(){if(inflight[k]===p)delete inflight[k]};p.then(done,done);
+      return p;
+    };
+  }
+  /* b) Conteos de carpetas guardados: la lista sale con números al instante */
+  function ckey(t){var q=window.sess;return q?'u4k_cnt_'+t+'|'+q.s+'|'+q.u:''}
+  function saveCounts(t,all){
+    try{var k=ckey(t);if(!k||!Array.isArray(all))return;var cnt={__all:all.length};
+      all.forEach(function(c){var id=String(c.category_id);cnt[id]=(cnt[id]||0)+1});
+      localStorage.setItem(k,JSON.stringify(cnt))}catch(e){}
+  }
+  var oOP=window.openPicker;
+  if(typeof oOP==='function'){
+    window.openPicker=function(){
+      try{
+        var t=window.tab;
+        if((t==='vod'||t==='series')&&Array.isArray(window.catItems)){
+          var j=JSON.parse(localStorage.getItem(ckey(t))||'null');
+          if(j)window.catItems.forEach(function(ci){
+            if(ci.n!=='…')return;
+            var v=ci.id==='all'?j.__all:j[String(ci.id)];
+            if(v!=null)ci.n=v;
+          });
+        }
+      }catch(e){}
+      return oOP.apply(this,arguments);
+    };
+  }
+  var oLC=window.loadCounts;
+  if(typeof oLC==='function'){
+    window.loadCounts=async function(t){
+      var r=await oLC.apply(this,arguments);
+      try{if(window.allCache&&Array.isArray(window.allCache[t]))saveCounts(t,window.allCache[t])}catch(e){}
+      return r;
+    };
+  }
+  /* c) Precarga al entrar: carpetas ya listas y listas completas en segundo plano */
+  var started=null;
+  window.u4kPrefetch=function(){
+    var me=window.sess;if(!me||me.m3u||started===me)return;started=me;
+    function live(){return window.sess===me}
+    Promise.all([['vod','get_vod_categories'],['series','get_series_categories']].map(function(x){
+      return window.api(x[1]).then(function(r){
+        if(live()&&Array.isArray(r)&&window.catsCache&&!window.catsCache[x[0]])window.catsCache[x[0]]=r;
+      }).catch(function(){});
+    })).then(function(){
+      var seq=[['vod','get_vod_streams'],['series','get_series']];
+      (function next(i){
+        if(i>=seq.length||!live())return;
+        var t=seq[i][0],act=seq[i][1];
+        if(window.allCache&&window.allCache[t]){next(i+1);return}
+        setTimeout(function(){
+          if(!live())return;
+          window.api(act).then(function(r){
+            if(live()&&Array.isArray(r)&&window.allCache&&!window.allCache[t]){window.allCache[t]=r;saveCounts(t,r)}
+          }).catch(function(){}).then(function(){next(i+1)});
+        },i===0?2000:1200);
+      })(0);
+    });
+  };
+  /* d) La lista de carpetas se vuelve a dibujar al terminar de contar: conservar foco y posición
+        (antes el foco se perdía y la siguiente flecha mandaba todo arriba) */
+  var oRC=window.renderCats;
+  if(typeof oRC==='function'){
+    window.renderCats=function(){
+      var cats=document.getElementById('cats'),a=document.activeElement,idx=null,st=0;
+      try{
+        if(cats){
+          st=cats.scrollTop;
+          if(a&&a!==document.body&&cats.contains(a)){var f=a.closest('.cc');if(f)idx=f.getAttribute('data-i')}
+        }
+      }catch(e){}
+      var r=oRC.apply(this,arguments);
+      try{
+        if(cats){
+          cats.scrollTop=st;
+          if(idx!=null){var n=cats.querySelector('.cc[data-i="'+idx+'"]');if(n)n.focus({preventScroll:true})}
+        }
+      }catch(e){}
+      return r;
+    };
+  }
 })();
 </script>
 </body></html>
