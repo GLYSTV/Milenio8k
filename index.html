@@ -2595,7 +2595,7 @@ syncOverlayFav();
  function isVisible(el){
    if(!el||!el.getBoundingClientRect)return false;
    var r=el.getBoundingClientRect(),s=getComputedStyle(el);
-   return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&!el.closest('.hide');
+   return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&!(function(el,sel){var h=el.closest(sel);if(h&&h.id==='picker'){var lv=document.getElementById('lv');if(lv&&lv.classList.contains('panes'))h=h.parentElement?h.parentElement.closest(sel):null}return !!h})(el,'.hide');
  }
  function candidates(){
    return Array.prototype.slice.call(document.querySelectorAll(SELECT)).filter(isVisible);
@@ -3065,7 +3065,7 @@ syncOverlayFav();
 <script id="glys-cats-nav">
 /* Lista de carpetas/categorías: flecha abajo/arriba pasa a la carpeta vecina (sin saltar al panel de películas) */
 (function(){
-  function vis(el){var r=el.getBoundingClientRect();return r.width>1&&r.height>1&&!el.closest('.hide,[hidden]')}
+  function vis(el){var r=el.getBoundingClientRect();return r.width>1&&r.height>1&&!(function(el,sel){var h=el.closest(sel);if(h&&h.id==='picker'){var lv=document.getElementById('lv');if(lv&&lv.classList.contains('panes'))h=h.parentElement?h.parentElement.closest(sel):null}return !!h})(el,'.hide,[hidden]')}
   function sib(el,dir){
     var n=dir>0?el.nextElementSibling:el.previousElementSibling;
     while(n&&!(n.classList&&n.classList.contains('cc')&&vis(n)))n=dir>0?n.nextElementSibling:n.previousElementSibling;
@@ -3099,7 +3099,7 @@ syncOverlayFav();
   function vis(el){
     var r=el.getBoundingClientRect();
     if(r.width<2||r.height<2)return false;
-    if(el.closest('.hide,[hidden]'))return false;
+    if((function(el,sel){var h=el.closest(sel);if(h&&h.id==='picker'){var lv=document.getElementById('lv');if(lv&&lv.classList.contains('panes'))h=h.parentElement?h.parentElement.closest(sel):null}return !!h})(el,'.hide,[hidden]'))return false;
     var cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none';
   }
   function scope(){
@@ -3504,6 +3504,33 @@ button:focus-visible .ln svg,.ghost:focus-visible .ln svg,.btn:focus-visible .ln
       return r;
     };
   }
+})();
+</script>
+<script id="u4k-auto-recent">
+/* Al entrar en Películas o Series: a los 2 segundos se abre solo "RECIÉN AÑADIDO"
+   (si todavía no has elegido otra carpeta). */
+(function(){
+  var timer=null;
+  function arm(t){
+    clearTimeout(timer);
+    if(t!=='vod'&&t!=='series')return;
+    var tries=0;
+    function go(){
+      try{
+        if(window.tab!==t||!window.sess)return;
+        if(window.catIdx>=0)return;                       /* ya elegiste una carpeta */
+        var has=(window.catItems||[]).some(function(c){return c.id==='recent'});
+        if(has){window.selectCat('recent');return}
+        if(++tries<30)timer=setTimeout(go,500);           /* las carpetas aún no llegan: reintentar */
+      }catch(e){}
+    }
+    timer=setTimeout(go,2000);
+  }
+  var prev=window.loadTab;
+  window.loadTab=async function(t){
+    arm(t);
+    return prev.apply(this,arguments);
+  };
 })();
 </script>
 </body></html>
